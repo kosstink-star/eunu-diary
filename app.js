@@ -367,6 +367,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const b = prompt('태어난 날짜를 입력해주세요 (예: 2026-02-15)', profile.birthdate);
             if (n) profile.name = n; if (b) profile.birthdate = b; saveAll(); updateHeader(); render();
         };
+        document.getElementById('set-backup').onclick = () => {
+            const data = { records, growthData, profile, exportDate: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `eunu_diary_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('데이터가 성공적으로 저장되었습니다!');
+        };
         document.getElementById('set-reset').onclick = () => { if (confirm('모든 데이터를 삭제할까요? 되돌릴 수 없습니다.')) { records = []; growthData = []; saveAll(); render(); updateHeader(); } };
     }
 
