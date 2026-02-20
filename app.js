@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('우리은우 성장일기 v10.0 (D-Day & Wheel Picker) 로드 완료');
+    console.log('우리은우 성장일기 v11.0 (Sleep Wheel Picker & UI Refine) 로드 완료');
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
     let growthData = JSON.parse(localStorage.getItem('babyGrowth')) || [];
     let profile = JSON.parse(localStorage.getItem('babyProfile')) || {
         name: '우리은우',
-        birthdate: '2026-02-15' // Default birthdate for D-day calculation
+        birthdate: '2026-02-15'
     };
     let currentView = 'home', chart = null, selectedDate = new Date();
 
@@ -83,9 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function openPicker(dt, cb) {
         selectors.dtPickerOverlay.style.display = 'flex';
         const h = dt.getHours(), m = dt.getMinutes();
-
         const hCol = document.getElementById('wheel-h'), mCol = document.getElementById('wheel-m');
-        // Wait a bit for display flex to take effect before scrolling
         setTimeout(() => {
             hCol.scrollTop = h * 40;
             mCol.scrollTop = m * 40;
@@ -189,10 +187,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const curDt = rec ? new Date(rec.timestamp) : new Date(selectedDate);
         if (!rec) { const n = new Date(); curDt.setHours(n.getHours()); curDt.setMinutes(n.getMinutes()); }
 
+        // Start/End Time States for Sleep
+        let sleepStart = new Date(curDt.getTime() - (60 * 60 * 1000)); // Default 1 hour before
+        let sleepEnd = new Date(curDt.getTime());
+
         const refreshDt = () => {
             const disp = `${curDt.getFullYear()}.${String(curDt.getMonth() + 1).padStart(2, '0')}.${String(curDt.getDate()).padStart(2, '0')} 금 ${getTimeStr(curDt.getTime())}`;
             const el = document.getElementById('modal-dt-disp');
             if (el) el.innerHTML = `<i class="far fa-calendar-alt"></i> ${disp} <i class="fas fa-chevron-down"></i>`;
+        };
+
+        const updateSleepTimeDisp = () => {
+            const sEl = document.getElementById('sleep-start-disp');
+            const eEl = document.getElementById('sleep-end-disp');
+            if (sEl) sEl.innerText = getTimeStr(sleepStart.getTime());
+            if (eEl) eEl.innerText = getTimeStr(sleepEnd.getTime());
+
+            const diff = Math.floor((sleepEnd - sleepStart) / (60 * 1000));
+            const diffEl = document.getElementById('v-sleep-diff');
+            if (diffEl) diffEl.innerText = `${Math.floor(diff / 60)}시간 ${diff % 60}분`;
         };
 
         const top = `<div class="modal-header-row"><h3>${type === 'feed' ? '식사' : type === 'diaper' ? '배변' : type === 'sleep' ? '수면' : type === 'bath' ? '목욕' : type === 'health' ? '건강' : '일기'} 기록</h3>${rid ? `<i class="fas fa-trash-alt delete-icon" onclick="window.delMod('${rid}')"></i>` : `<i class="fas fa-times delete-icon" onclick="closeModal()"></i>`}</div><div class="modal-date-picker" id="modal-dt-disp"></div>`;
@@ -223,7 +236,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div><div class="amount-box">측정값 <strong id="v-disp">${rec ? rec.description : '36.5'}</strong> <span id="v-unit">°C</span></div><input type="text" id="v-in" value="${rec ? rec.description : '36.5'}" style="width:100%; padding:15px; border-radius:15px; border:1px solid #eee; text-align:center; margin-bottom:20px;"><div class="note-container"><textarea id="v-nt" placeholder="증상 등을 입력하세요">${rec ? rec.notes || '' : ''}</textarea></div>`;
                 break;
             case 'sleep':
-                html = `${top}<div class="centered-icon-box"><div class="circle" style="width:80px; height:80px; border-radius:50%; background:#e0f7fa; color:#00acc1; display:flex; justify-content:center; align-items:center; font-size:2rem; border:2px solid #b2ebf2;"><i class="fas fa-moon"></i></div><label style="font-weight:800; color:#00acc1; margin-top:10px;">수면</label></div><div class="time-picker-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;"><div class="time-picker-box" style="background:#f9f9f9; padding:15px; border-radius:15px; text-align:center;"><span style="font-size:0.8rem; color:#888;">시작</span><div style="font-size:1.4rem; font-weight:700;"><input type="number" id="sh" value="16" style="width:35px; border:none; background:transparent; font-weight:700; font-size:1.4rem;">:<input type="number" id="sm" value="20" style="width:35px; border:none; background:transparent; font-weight:700; font-size:1.4rem;"></div></div><div class="time-picker-box" style="background:#f9f9f9; padding:15px; border-radius:15px; text-align:center;"><span style="font-size:0.8rem; color:#888;">종료</span><div style="font-size:1.4rem; font-weight:700;"><input type="number" id="eh" value="${curDt.getHours()}" style="width:35px; border:none; background:transparent; font-weight:700; font-size:1.4rem;">:<input type="number" id="em" value="${curDt.getMinutes()}" style="width:35px; border:none; background:transparent; font-weight:700; font-size:1.4rem;"></div></div></div>`;
+                if (rec && rec.dm) {
+                    sleepEnd = new Date(rec.timestamp);
+                    sleepStart = new Date(rec.timestamp - (rec.dm * 60 * 1000));
+                }
+                html = `${top}
+                <div class="centered-icon-box" style="margin:20px 0 30px 0;">
+                    <div class="circle" style="width:100px; height:100px; border-radius:50%; background:#e0f7fa; color:#00acc1; display:flex; justify-content:center; align-items:center; font-size:3rem; border:3px solid #b2ebf2; box-shadow:0 10px 20px rgba(0,172,193,0.15);">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                </div>
+                <div class="amount-box">총 수면시간 <strong id="v-sleep-diff">?시간 ?분</strong></div>
+                <div class="time-picker-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+                    <div class="time-picker-box" id="sleep-start-trigger" style="background:#f9f9f9; padding:20px; border-radius:15px; text-align:center; cursor:pointer; border:1px solid #eee;">
+                        <span style="font-size:0.85rem; color:#888; font-weight:700;">시작</span>
+                        <div style="font-size:1.6rem; font-weight:800; margin-top:8px; color:#333;" id="sleep-start-disp">${getTimeStr(sleepStart.getTime())}</div>
+                    </div>
+                    <div class="time-picker-box" id="sleep-end-trigger" style="background:#f9f9f9; padding:20px; border-radius:15px; text-align:center; cursor:pointer; border:1px solid #eee;">
+                        <span style="font-size:0.85rem; color:#888; font-weight:700;">종료</span>
+                        <div style="font-size:1.6rem; font-weight:800; margin-top:8px; color:#333;" id="sleep-end-disp">${getTimeStr(sleepEnd.getTime())}</div>
+                    </div>
+                </div>
+                <div class="note-container"><textarea id="v-nt" placeholder="기록을 남겨주세요">${rec ? rec.notes || '' : ''}</textarea></div>`;
                 selTitle = '수면';
                 break;
             case 'photo':
@@ -242,8 +276,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         selectors.modalBody.innerHTML = html + `<div class="modal-footer" style="margin-top:20px; display:flex; gap:10px;"><button class="btn btn-cancel" onclick="closeModal()">취소</button><button class="btn btn-save" id="save-final">${rid ? '수정' : '저장'}</button></div>`;
         refreshDt();
+        if (type === 'sleep') updateSleepTimeDisp();
 
         document.getElementById('modal-dt-disp').onclick = () => openPicker(curDt, (h, m) => { curDt.setHours(h); curDt.setMinutes(m); refreshDt(); });
+
+        if (type === 'sleep') {
+            document.getElementById('sleep-start-trigger').onclick = () => openPicker(sleepStart, (h, m) => {
+                sleepStart.setHours(h); sleepStart.setMinutes(m); updateSleepTimeDisp();
+            });
+            document.getElementById('sleep-end-trigger').onclick = () => openPicker(sleepEnd, (h, m) => {
+                sleepEnd.setHours(h); sleepEnd.setMinutes(m); updateSleepTimeDisp();
+            });
+        }
+
         document.querySelectorAll('.selection-item').forEach(i => i.onclick = () => {
             document.querySelectorAll('.selection-item').forEach(x => x.classList.remove('active'));
             i.classList.add('active'); selTitle = i.querySelector('label').innerText;
@@ -256,14 +301,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('save-final').onclick = () => {
             const nt = document.getElementById('v-nt')?.value || "";
             const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: nt, imageData: selImg };
+
             if (type === 'feed') res.description = `${document.getElementById('v-in').value}ml`;
             else if (type === 'diaper') res.description = '1회';
             else if (type === 'sleep') {
-                const sh = Number(document.getElementById('sh').value), sm = Number(document.getElementById('sm').value);
-                const eh = Number(document.getElementById('eh').value), em = Number(document.getElementById('em').value);
-                const dm = (eh * 60 + em) - (sh * 60 + sm);
+                const dm = Math.floor((sleepEnd - sleepStart) / (60 * 1000));
                 res.description = `${Math.floor(dm / 60)}시간 ${dm % 60}분`;
-                res.dm = dm; res.timestamp = new Date(curDt.getFullYear(), curDt.getMonth(), curDt.getDate(), eh, em).getTime();
+                res.dm = dm;
+                res.timestamp = sleepEnd.getTime();
             } else if (type === 'health') res.description = document.getElementById('v-in').value;
             else if (type === 'photo') res.description = '📖 하루일기';
 
@@ -280,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderGraph() {
         const ctx = document.getElementById('growthChart')?.getContext('2d'); if (!ctx) return;
         const s = [...growthData].sort((a, b) => a.timestamp - b.timestamp); if (chart) chart.destroy();
-        chart = new Chart(ctx, { type: 'line', data: { labels: s.map(x => new Date(x.timestamp).toLocaleDateString()), datasets: [{ label: '키(cm)', data: s.map(x => x.height), borderColor: '#ffa000' }, { label: '무게(kg)', data: s.map(x => x.weight), borderColor: '#00acc1' }] } });
+        chart = new Chart(ctx, { type: 'line', data: { labels: s.map(x => new Date(x.timestamp).toLocaleDateString()), datasets: [{ label: '키(cm)', data: s.map(x => x.height), borderColor: '#ffa000' }, { label: '몸무게(kg)', data: s.map(x => x.weight), borderColor: '#00acc1' }] } });
     }
     function renderCalendar() {
         const c = document.getElementById('calendar-container'); if (!c) return;
