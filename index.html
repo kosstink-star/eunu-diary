@@ -17,13 +17,18 @@
 
 <body>
     <div id="app">
-        <div class="header-left">
-            <i class="fas fa-arrow-left back-btn"></i>
-            <div class="name-info">
-                <h1>우리은우 육아 기록</h1>
-                <span class="d-day-badge" id="d-day-text">D+??</span>
+        <header>
+            <div class="header-left">
+                <i class="fas fa-arrow-left back-btn"></i>
+                <div class="name-info">
+                    <h1>우리은우 육아 기록</h1>
+                    <span class="d-day-badge" id="d-day-text">D+??</span>
+                </div>
             </div>
-        </div>
+            <div class="right-placeholder">
+                <i class="fas fa-heart" style="color:#ff9a8b"></i>
+            </div>
+        </header>
 
         <main class="dashboard" id="view-home">
             <div class="date-nav">
@@ -104,18 +109,13 @@
             <div class="nav-item" data-view="settings"><i class="fas fa-cog"></i></div>
         </nav>
 
-        <!-- Modals -->
         <div class="modal-overlay" id="modal-overlay">
             <div class="modal">
                 <div id="modal-body">
                     <!-- Dynamic Content -->
                 </div>
-                <!-- Save Button is inside modal-body injection for full control -->
             </div>
         </div>
-
-        <!-- Hidden Global Tooltip for JS to set Title -->
-        <h3 id="modal-title" style="display:none;"></h3>
 
         <div class="context-menu-overlay" id="context-menu-overlay">
             <div class="context-menu">
@@ -145,7 +145,6 @@
                         <div class="wheel-scroller" id="scroller-m"></div>
                     </div>
                 </div>
-                <!-- Hidden inputs for legacy compat if needed, but we'll use value from scroller -->
                 <input type="hidden" id="dt-h" value="0">
                 <input type="hidden" id="dt-m" value="0">
             </div>

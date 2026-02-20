@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('우리은우 성장일기 v12.0 (Premium Header & Multi-Add) 로드 완료');
+    console.log('우리은우 성장일기 v12.1 (Quick Add Fix & UI Refine) 로드 완료');
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             hCol.scrollTop = h * 40;
             mCol.scrollTop = m * 40;
-        }, 50);
+        }, 80);
 
         document.getElementById('dt-cancel').onclick = () => selectors.dtPickerOverlay.style.display = 'none';
         document.getElementById('dt-done').onclick = () => {
@@ -177,9 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#btn-photo .stat-val-small').innerText = `${f.filter(r => r.type === 'photo').length}개`;
     }
 
-    window.editRec = (id) => { const r = records.find(x => x.id === id); if (r) openModal(r.type, id); };
+    window.editRec = (id) => { const r = records.find(x => x.id === id); if (r) window.openModal(r.type, id); };
 
-    function openModal(type, rid = null) {
+    window.openModal = (type, rid = null) => {
         selectors.modalOverlay.style.display = 'flex';
         let html = '';
         let selImg = null, selTitle = '';
@@ -206,26 +206,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (diffEl) diffEl.innerText = `${Math.floor(diff / 60)}시간 ${diff % 60}분`;
         };
 
-        const top = `<div class="modal-header-row"><h3>${type === 'feed' ? '식사' : type === 'diaper' ? '배변' : type === 'sleep' ? '수면' : type === 'bath' ? '목욕' : type === 'health' ? '건강' : type === 'photo' ? '일기' : '추가하기'}</h3>${rid ? `<i class="fas fa-trash-alt delete-icon" onclick="window.delMod('${rid}')"></i>` : `<i class="fas fa-times delete-icon" onclick="closeModal()"></i>`}</div><div class="modal-date-picker" id="modal-dt-disp" ${type === 'quick' ? 'style="display:none"' : ''}></div>`;
+        const top = `<div class="modal-header-row"><h3>${type === 'feed' ? '식사' : type === 'diaper' ? '배변' : type === 'sleep' ? '수면' : type === 'bath' ? '목욕' : type === 'health' ? '건강' : type === 'photo' ? '일기' : '기록하기'}</h3>${rid ? `<i class="fas fa-trash-alt delete-icon" onclick="window.delMod('${rid}')"></i>` : `<i class="fas fa-times delete-icon" onclick="window.closeModal()"></i>`}</div><div class="modal-date-picker" id="modal-dt-disp" ${type === 'quick' ? 'style="display:none"' : ''}></div>`;
+
+        if (type === 'quick') {
+            html = `${top}<div class="quick-add-grid">
+                <div class="quick-add-item" onclick="window.openModal('feed')"><div class="circle" style="background:#fff8e1; color:#ffa000;"><i class="fas fa-utensils"></i></div><label>식사</label></div>
+                <div class="quick-add-item" onclick="window.openModal('diaper')"><div class="circle" style="background:#efebe9; color:#8d6e63;"><i class="fas fa-baby"></i></div><label>배변</label></div>
+                <div class="quick-add-item" onclick="window.openModal('sleep')"><div class="circle" style="background:#e0f7fa; color:#00acc1;"><i class="fas fa-moon"></i></div><label>수면</label></div>
+                <div class="quick-add-item" onclick="window.openModal('bath')"><div class="circle" style="background:#f9fbe7; color:#afb42b;"><i class="fas fa-bath"></i></div><label>목욕</label></div>
+                <div class="quick-add-item" onclick="window.openModal('health')"><div class="circle" style="background:#e1f5fe; color:#0288d1;"><i class="fas fa-notes-medical"></i></div><label>건강</label></div>
+                <div class="quick-add-item" onclick="window.openModal('photo')"><div class="circle" style="background:#f3e5f5; color:#8e24aa;"><i class="fas fa-book"></i></div><label>일기</label></div>
+            </div>`;
+            selectors.modalBody.innerHTML = html;
+            return;
+        }
 
         switch (type) {
-            case 'quick':
-                html = `${top}<div class="quick-add-grid">
-                    <div class="quick-add-item" onclick="openModal('feed')"><div class="circle" style="background:#fff8e1; color:#ffa000;"><i class="fas fa-utensils"></i></div><label>식사</label></div>
-                    <div class="quick-add-item" onclick="openModal('diaper')"><div class="circle" style="background:#efebe9; color:#8d6e63;"><i class="fas fa-baby"></i></div><label>배변</label></div>
-                    <div class="quick-add-item" onclick="openModal('sleep')"><div class="circle" style="background:#e0f7fa; color:#00acc1;"><i class="fas fa-moon"></i></div><label>수면</label></div>
-                    <div class="quick-add-item" onclick="openModal('bath')"><div class="circle" style="background:#f9fbe7; color:#afb42b;"><i class="fas fa-bath"></i></div><label>목욕</label></div>
-                    <div class="quick-add-item" onclick="openModal('health')"><div class="circle" style="background:#e1f5fe; color:#0288d1;"><i class="fas fa-notes-medical"></i></div><label>건강</label></div>
-                    <div class="quick-add-item" onclick="openModal('photo')"><div class="circle" style="background:#f3e5f5; color:#8e24aa;"><i class="fas fa-book"></i></div><label>일기</label></div>
-                </div>`;
-                selectors.modalBody.innerHTML = html;
-                return; // Early return for quick add
             case 'feed':
                 selTitle = rec ? rec.title : '이유식';
                 html = `${top}<div class="selection-grid">
                     <div class="selection-item ${selTitle === '이유식' ? 'active' : ''}" data-val="f1"><div class="circle" style="background:#fff8e1; color:#ffa000;"><i class="fas fa-utensils"></i></div><label>이유식</label></div>
                     <div class="selection-item ${selTitle === '간식' ? 'active' : ''}" data-val="f2"><div class="circle" style="background:#e0f2f1; color:#00897b;"><i class="fas fa-cookie"></i></div><label>간식</label></div>
-                </div><div class="amount-box">섭취량 <strong id="v-disp">${rec ? parseInt(rec.description) : '200'}</strong> ml</div><input type="number" id="v-in" value="${rec ? parseInt(rec.description) : '200'}" style="width:100%; padding:15px; border-radius:15px; border:1px solid #eee; text-align:center; margin-bottom:20px;"><div class="note-container"><textarea id="v-nt" placeholder="메모를 남겨주세요">${rec ? rec.notes || '' : ''}</textarea></div>`;
+                </div><div class="amount-box">섭취량 <strong id="v-disp">${rec ? parseInt(rec.description) : '200'}</strong> ml</div><input type="number" id="v-in" value="${rec ? parseInt(rec.description) : '200'}" style="width:100%; padding:18px; border-radius:18px; border:1px solid #efefef; background:#f9f9f9; text-align:center; font-size:1.2rem; font-weight:700; margin-bottom:20px; outline:none;"><div class="note-container"><textarea id="v-nt" placeholder="메모를 남겨주세요">${rec ? rec.notes || '' : ''}</textarea></div>`;
                 break;
             case 'diaper':
                 selTitle = rec ? rec.title : '대변';
@@ -242,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="selection-item ${selTitle === '투약' ? 'active' : ''}" data-val="h2"><div class="circle" style="background:#fce4ec; color:#f06292;"><i class="fas fa-pills"></i></div><label>투약</label></div>
                     <div class="selection-item ${selTitle === '병원' ? 'active' : ''}" data-val="h3"><div class="circle" style="background:#e0f2f1; color:#4db6ac;"><i class="fas fa-hospital"></i></div><label>병원</label></div>
                     <div class="selection-item ${selTitle === '기타' ? 'active' : ''}" data-val="h4"><div class="circle" style="background:#f5f5f5; color:#999;"><i class="fas fa-clipboard-list"></i></div><label>기타</label></div>
-                </div><div class="amount-box">측정값 <strong id="v-disp">${rec ? rec.description : '36.5'}</strong> <span id="v-unit">°C</span></div><input type="text" id="v-in" value="${rec ? rec.description : '36.5'}" style="width:100%; padding:15px; border-radius:15px; border:1px solid #eee; text-align:center; margin-bottom:20px;"><div class="note-container"><textarea id="v-nt" placeholder="증상 등을 입력하세요">${rec ? rec.notes || '' : ''}</textarea></div>`;
+                </div><div class="amount-box">측정값 <strong id="v-disp">${rec ? rec.description : '36.5'}</strong> <span id="v-unit">°C</span></div><input type="text" id="v-in" value="${rec ? rec.description : '36.5'}" style="width:100%; padding:18px; border-radius:18px; border:1px solid #efefef; background:#f9f9f9; text-align:center; font-size:1.2rem; font-weight:700; margin-bottom:20px; outline:none;"><div class="note-container"><textarea id="v-nt" placeholder="증상 등을 입력하세요">${rec ? rec.notes || '' : ''}</textarea></div>`;
                 break;
             case 'sleep':
                 if (rec && rec.dm) {
@@ -251,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 html = `${top}
                 <div class="centered-icon-box" style="margin:20px 0 30px 0;">
-                    <div class="circle" style="width:100px; height:100px; border-radius:35px; background:#e0f7fa; color:#00acc1; display:flex; justify-content:center; align-items:center; font-size:3rem; border:3px solid #b2ebf2; box-shadow:0 12px 25px rgba(0,172,193,0.15);">
+                    <div class="circle" style="width:100px; height:100px; border-radius:35px; background:linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%); color:#00acc1; display:flex; justify-content:center; align-items:center; font-size:3rem; box-shadow:0 12px 25px rgba(0,172,193,0.15);">
                         <i class="fas fa-moon"></i>
                     </div>
                 </div>
@@ -271,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'photo':
                 selImg = rec ? rec.imageData : null;
-                html = `${top}<div id="img-b" style="width:100%; height:180px; background:#f9f9f9; border:1px dashed #ddd; border-radius:15px; display:flex; justify-content:center; align-items:center; overflow:hidden;">${selImg ? `<img src="${selImg}" style="height:100%;">` : '<i class="fas fa-camera" style="font-size:2rem; color:#ccc;"></i>'}<input type="file" id="fi-i" style="display:none" accept="image/*"></div><div class="note-container" style="margin-top:20px;"><textarea id="v-nt" placeholder="오늘의 일기...">${rec ? rec.notes || '' : ''}</textarea></div>`;
+                html = `${top}<div id="img-b" style="width:100%; height:180px; background:#f9f9f9; border:1px dashed #ddd; border-radius:15px; display:flex; justify-content:center; align-items:center; overflow:hidden; cursor:pointer;">${selImg ? `<img src="${selImg}" style="height:100%;">` : '<i class="fas fa-camera" style="font-size:2rem; color:#ccc;"></i>'}<input type="file" id="fi-i" style="display:none" accept="image/*"></div><div class="note-container" style="margin-top:20px;"><textarea id="v-nt" placeholder="오늘의 일기...">${rec ? rec.notes || '' : ''}</textarea></div>`;
                 selTitle = '하루일기';
                 break;
             case 'bath':
@@ -283,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
 
-        selectors.modalBody.innerHTML = html + `<div class="modal-footer" style="margin-top:20px; display:flex; gap:10px;"><button class="btn btn-cancel" onclick="closeModal()">취소</button><button class="btn btn-save" id="save-final">${rid ? '수정' : '저장'}</button></div>`;
+        selectors.modalBody.innerHTML = html + `<div class="modal-footer" style="margin-top:20px; display:flex; gap:10px;"><button class="btn btn-cancel" onclick="window.closeModal()">취소</button><button class="btn btn-save" id="save-final">${rid ? '수정' : '저장'}</button></div>`;
         refreshDt();
         if (type === 'sleep') updateSleepTimeDisp();
 
@@ -310,6 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('save-final').onclick = () => {
             const nt = document.getElementById('v-nt')?.value || "";
             const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: nt, imageData: selImg };
+
             if (type === 'feed') res.description = `${document.getElementById('v-in').value}ml`;
             else if (type === 'diaper') res.description = '1회';
             else if (type === 'sleep') {
@@ -321,25 +324,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (rid) { const ix = records.findIndex(x => x.id === rid); records[ix] = { ...records[ix], ...res }; }
             else { const id = 'rec_' + Math.random().toString(36).substr(2, 9); records.push({ id, ...res }); }
-            saveAll(); render(); closeModal();
+            saveAll(); render(); window.closeModal();
         };
     }
 
     window.closeModal = () => selectors.modalOverlay.style.display = 'none';
     window.delMod = (id) => delRec(id);
-    selectors.modalOverlay.onclick = (e) => { if (e.target === selectors.modalOverlay) closeModal(); };
+    selectors.modalOverlay.onclick = (e) => { if (e.target === selectors.modalOverlay) window.closeModal(); };
 
     function renderGraph() {
         const ctx = document.getElementById('growthChart')?.getContext('2d'); if (!ctx) return;
         const s = [...growthData].sort((a, b) => a.timestamp - b.timestamp); if (chart) chart.destroy();
-        chart = new Chart(ctx, { type: 'line', data: { labels: s.map(x => new Date(x.timestamp).toLocaleDateString()), datasets: [{ label: '키(cm)', data: s.map(x => x.height), borderColor: '#ffa000' }, { label: '몸무게(kg)', data: s.map(x => x.weight), borderColor: '#00acc1' }] } });
+        chart = new Chart(ctx, { type: 'line', data: { labels: s.map(x => new Date(x.timestamp).toLocaleDateString()), datasets: [{ label: '키(cm)', data: s.map(x => x.height), borderColor: '#ffa000', backgroundColor: 'rgba(255,160,0,0.1)', fill: true, tension: 0.4 }, { label: '몸무게(kg)', data: s.map(x => x.weight), borderColor: '#00acc1', backgroundColor: 'rgba(0,172,193,0.1)', fill: true, tension: 0.4 }] }, options: { plugins: { legend: { labels: { font: { family: 'Pretendard', weight: '700' } } } } } });
     }
     function renderCalendar() {
         const c = document.getElementById('calendar-container'); if (!c) return;
         const y = selectedDate.getFullYear(), m = selectedDate.getMonth(), fd = new Date(y, m, 1).getDay(), ld = new Date(y, m + 1, 0).getDate();
-        let h = `<div style="padding:20px;"><div style="display:flex; justify-content:space-between; margin-bottom:20px;"><i class="fas fa-chevron-left" id="cp"></i><h3>${y}년 ${m + 1}월</h3><i class="fas fa-chevron-right" id="cn"></i></div><div style="display:grid; grid-template-columns:repeat(7,1fr); gap:5px; text-align:center;">${['일', '월', '화', '수', '목', '금', '토'].map(x => `<div style="font-size:0.8rem; color:#888;">${x}</div>`).join('')}`;
+        let h = `<div style="padding:20px;"><div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items:center;"><i class="fas fa-chevron-left" id="cp" style="cursor:pointer; padding:10px;"></i><h3 style="font-weight:800; font-size:1.2rem;">${y}년 ${m + 1}월</h3><i class="fas fa-chevron-right" id="cn" style="cursor:pointer; padding:10px;"></i></div><div style="display:grid; grid-template-columns:repeat(7,1fr); gap:8px; text-align:center;">${['일', '월', '화', '수', '목', '금', '토'].map(x => `<div style="font-size:0.75rem; color:#bbb; font-weight:700;">${x}</div>`).join('')}`;
         for (let i = 0; i < fd; i++) h += '<div></div>';
-        for (let d = 1; d <= ld; d++) { const dk = new Date(y, m, d).toLocaleDateString(), active = selectedDate.toLocaleDateString() === dk; h += `<div onclick="window.sd(${y},${m},${d})" style="padding:10px; border-radius:10px; background:${active ? 'var(--primary-color)' : '#f9f9f9'}; color:${active ? 'white' : '#333'};">${d}</div>`; }
+        for (let d = 1; d <= ld; d++) { const dk = new Date(y, m, d).toLocaleDateString(), active = selectedDate.toLocaleDateString() === dk; h += `<div onclick="window.sd(${y},${m},${d})" style="padding:12px 0; border-radius:12px; font-weight:700; cursor:pointer; background:${active ? 'linear-gradient(135deg, #ff9a8b 0%, #ff6a88 100%)' : '#f8f8f8'}; color:${active ? 'white' : '#555'}; ${active ? 'box-shadow:0 4px 10px rgba(255,106,136,0.2)' : ''}">${d}</div>`; }
         c.innerHTML = h + '</div></div>';
         document.getElementById('cp').onclick = () => { selectedDate.setMonth(m - 1); renderCalendar(); };
         document.getElementById('cn').onclick = () => { selectedDate.setMonth(m + 1); renderCalendar(); };
@@ -347,17 +350,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.sd = (y, m, d) => { selectedDate = new Date(y, m, d); switchView('home'); };
     function renderSettings() {
         document.getElementById('set-profile').onclick = () => {
-            const n = prompt('이름', profile.name);
-            const b = prompt('태어난 날짜 (YYYY-MM-DD)', profile.birthdate);
+            const n = prompt('아이 이름을 입력해주세요', profile.name);
+            const b = prompt('태어난 날짜를 입력해주세요 (예: 2026-02-15)', profile.birthdate);
             if (n) profile.name = n;
             if (b) profile.birthdate = b;
             saveAll(); render();
         };
-        document.getElementById('set-reset').onclick = () => { if (confirm('모든 데이터를 삭제하시겠습니까?')) { records = []; growthData = []; saveAll(); render(); } };
+        document.getElementById('set-reset').onclick = () => { if (confirm('모든 데이터를 삭제하시겠습니까? 되돌릴 수 없습니다.')) { records = []; growthData = []; saveAll(); render(); } };
     }
 
-    ['feed', 'diaper', 'sleep', 'bath', 'health', 'photo'].forEach(t => { const b = document.getElementById(`btn-${t}`); if (b) b.onclick = () => openModal(t); });
-    document.querySelector('.add-btn').onclick = () => openModal('quick');
-    const gb = document.getElementById('btn-add-growth'); if (gb) gb.onclick = () => { const h = prompt('키'), w = prompt('무게'); if (h && w) { growthData.push({ height: h, weight: w, timestamp: new Date().getTime() }); saveAll(); renderGraph(); } };
+    ['feed', 'diaper', 'sleep', 'bath', 'health', 'photo'].forEach(t => { const b = document.getElementById(`btn-${t}`); if (b) b.onclick = () => window.openModal(t); });
+    document.querySelector('.add-btn').onclick = () => window.openModal('quick');
+    const gb = document.getElementById('btn-add-growth'); if (gb) gb.onclick = () => { const h = prompt('현재 키(cm)를 입력하세요'), w = prompt('현재 몸무게(kg)를 입력하세요'); if (h && w) { growthData.push({ height: h, weight: w, timestamp: new Date().getTime() }); saveAll(); renderGraph(); } };
     switchView('home');
 });
