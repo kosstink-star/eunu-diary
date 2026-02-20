@@ -343,9 +343,10 @@ header {
     top: 0;
     width: 70px;
     text-align: right;
-    font-weight: 900;
-    font-size: 0.85rem;
-    color: #ccc;
+    font-weight: 950;
+    font-size: 0.95rem;
+    color: #444;
+    /* Darker for better visibility */
     padding-top: 10px;
 }
 
@@ -367,17 +368,49 @@ header {
     border-radius: 24px;
     padding: 22px;
     margin-right: 25px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-    border: 1px solid #fcfcfc;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.02);
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+}
+
+/* Category Specific Backgrounds */
+.type-feed .item-content {
+    background: #fffcf0;
+    border-color: #fff4cc;
+}
+
+.type-diaper .item-content {
+    background: #fdfaf9;
+    border-color: #f5f0ee;
+}
+
+.type-sleep .item-content {
+    background: #f0faff;
+    border-color: #e0f8ff;
+}
+
+.type-bath .item-content {
+    background: #fcfdf5;
+    border-color: #fafdca;
+}
+
+.type-health .item-content {
+    background: #f5faff;
+    border-color: #eaf6ff;
+}
+
+.type-photo .item-content {
+    background: #fcfaff;
+    border-color: #fbf5ff;
 }
 
 .item-main h4 {
     font-size: 1.1rem;
     font-weight: 900;
     margin-bottom: 6px;
+    color: #111;
 }
 
 /* Main Modal & 'X' Button Positioning (Image 995 Fix) */
