@@ -7,8 +7,6 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>우리은우 성장일기 - Eunu's Diary</title>
     <meta name="description" content="우리 은우의 성장을 기록하고 관리하는 스마트한 육아 다이어리">
-    <meta name="theme-color" content="#ffffff">
-    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
@@ -19,101 +17,137 @@
     <div id="app">
         <header>
             <div class="header-left">
-                <i class="fas fa-arrow-left back-btn"></i>
+                <i class="fas fa-arrow-left back-btn" id="header-back-btn" style="display:none;"></i>
                 <div class="name-info">
                     <h1>우리은우 육아 기록</h1>
                     <span class="d-day-badge" id="d-day-text">D+??</span>
                 </div>
             </div>
-            <div class="right-placeholder">
-                <i class="fas fa-heart" style="color:#ff9a8b"></i>
+            <div class="header-right">
+                <div class="heart-box">
+                    <i class="fas fa-heart"></i>
+                </div>
             </div>
         </header>
 
         <main class="dashboard" id="view-home">
             <div class="date-nav">
-                <i class="fas fa-chevron-left"></i>
-                <div class="date-display"><i class="far fa-calendar-alt"></i> <span id="current-date-text">02월 20일
-                        (오늘)</span></div>
-                <i class="fas fa-chevron-right"></i>
+                <button class="nav-arrow" id="prev-date"><i class="fas fa-chevron-left"></i></button>
+                <div class="date-display" id="date-display-trigger">
+                    <i class="far fa-calendar-alt"></i>
+                    <span id="current-date-text">02월 20일 (오늘)</span>
+                </div>
+                <button class="nav-arrow" id="next-date"><i class="fas fa-chevron-right"></i></button>
             </div>
 
             <div class="stat-grid">
                 <div class="stat-card" data-type="feed" id="btn-feed">
-                    <div class="icon-box"><i class="fas fa-utensils"></i></div>
+                    <div class="icon-box"><i class="fas fa-pizza-slice"></i></div>
+                    <span class="stat-label">식사</span>
                     <span class="stat-val-small">0ml</span>
                 </div>
                 <div class="stat-card" data-type="diaper" id="btn-diaper">
                     <div class="icon-box"><i class="fas fa-baby"></i></div>
+                    <span class="stat-label">배변</span>
                     <span class="stat-val-small">0회</span>
                 </div>
                 <div class="stat-card" data-type="sleep" id="btn-sleep">
                     <div class="icon-box"><i class="fas fa-moon"></i></div>
+                    <span class="stat-label">수면</span>
                     <span class="stat-val-small">0시간</span>
                 </div>
                 <div class="stat-card" data-type="bath" id="btn-bath">
                     <div class="icon-box"><i class="fas fa-bath"></i></div>
+                    <span class="stat-label">목욕</span>
                     <span class="stat-val-small">0회</span>
                 </div>
                 <div class="stat-card" data-type="health" id="btn-health">
-                    <div class="icon-box"><i class="fas fa-notes-medical"></i></div>
+                    <div class="icon-box"><i class="fas fa-thermometer-half"></i></div>
+                    <span class="stat-label">건강</span>
                     <span class="stat-val-small">0개</span>
                 </div>
                 <div class="stat-card" data-type="photo" id="btn-photo">
-                    <div class="icon-box"><i class="fas fa-book"></i></div>
+                    <div class="icon-box"><i class="fas fa-camera-retro"></i></div>
+                    <span class="stat-label">일기</span>
                     <span class="stat-val-small">0개</span>
                 </div>
             </div>
 
             <div class="timeline-container" id="timeline">
-                <!-- Timeline items go here -->
+                <!-- Timeline items -->
             </div>
 
-            <button class="add-btn"><i class="fas fa-plus"></i></button>
+            <button class="add-btn" id="global-add-btn">
+                <i class="fas fa-plus"></i>
+            </button>
         </main>
 
         <main class="content-view" id="view-graph" style="display:none;">
-            <div class="view-header" style="padding:20px;">
+            <div class="view-header">
                 <h2>성장 그래프</h2>
-                <button class="btn" id="btn-add-growth"
-                    style="background:var(--primary-color); color:white; width:auto; padding:5px 15px; font-size:0.8rem; border-radius:10px;">기록
-                    추가</button>
+                <button class="btn-mini" id="btn-add-growth">기록 추가</button>
             </div>
-            <div style="padding:0 20px;">
+            <div class="chart-wrapper">
                 <canvas id="growthChart"></canvas>
             </div>
         </main>
 
         <main class="content-view" id="view-calendar" style="display:none;">
-            <div class="view-header" style="padding:20px;">
+            <div class="view-header">
                 <h2>활동 달력</h2>
             </div>
             <div id="calendar-container"></div>
         </main>
 
         <main class="content-view" id="view-settings" style="display:none;">
-            <div class="view-header" style="padding:20px;">
+            <div class="view-header">
                 <h2>설정</h2>
             </div>
-            <div style="padding:20px; display:flex; flex-direction:column; gap:15px;">
-                <button class="btn btn-save" id="set-profile" style="background:#eee; color:#333;">프로필 수정</button>
-                <button class="btn btn-save" id="set-reset" style="background:#ffebee; color:#f44336;">전체 데이터
-                    초기화</button>
+            <div class="settings-list">
+                <div class="setting-item" id="set-profile">
+                    <div class="setting-icon" style="background:#e3f2fd; color:#1e88e5;"><i
+                            class="fas fa-user-edit"></i></div>
+                    <div class="setting-info">
+                        <strong>프로필 수정</strong>
+                        <span>아이 이름과 생일을 변경합니다.</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="setting-item" id="set-reset">
+                    <div class="setting-icon" style="background:#ffebee; color:#e53935;"><i
+                            class="fas fa-trash-alt"></i></div>
+                    <div class="setting-info">
+                        <strong>데이터 초기화</strong>
+                        <span>모든 기록을 영구적으로 삭제합니다.</span>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
             </div>
         </main>
 
         <nav>
-            <div class="nav-item active" data-view="home"><i class="fas fa-home"></i></div>
-            <div class="nav-item" data-view="graph"><i class="fas fa-chart-line"></i></div>
-            <div class="nav-item" data-view="calendar"><i class="fas fa-calendar-alt"></i></div>
-            <div class="nav-item" data-view="settings"><i class="fas fa-cog"></i></div>
+            <div class="nav-item active" data-view="home">
+                <i class="fas fa-home"></i>
+                <span>홈</span>
+            </div>
+            <div class="nav-item" data-view="graph">
+                <i class="fas fa-chart-line"></i>
+                <span>통계</span>
+            </div>
+            <div class="nav-item" data-view="calendar">
+                <i class="fas fa-calendar-alt"></i>
+                <span>달력</span>
+            </div>
+            <div class="nav-item" data-view="settings">
+                <i class="fas fa-user"></i>
+                <span>설정</span>
+            </div>
         </nav>
 
+        <!-- Modals -->
         <div class="modal-overlay" id="modal-overlay">
             <div class="modal">
-                <div id="modal-body">
-                    <!-- Dynamic Content -->
-                </div>
+                <div id="modal-body"></div>
             </div>
         </div>
 
@@ -121,7 +155,7 @@
             <div class="context-menu">
                 <div class="context-menu-item" id="ctx-edit">
                     <span>수정하기</span>
-                    <i class="fas fa-pencil-alt"></i>
+                    <i class="fas fa-edit"></i>
                 </div>
                 <div class="context-menu-item delete" id="ctx-delete">
                     <span>삭제하기</span>
@@ -134,7 +168,7 @@
             <div class="dt-picker-container">
                 <div class="dt-picker-header">
                     <button id="dt-cancel">취소</button>
-                    <button style="color:#007aff" id="dt-done">선택완료</button>
+                    <button id="dt-done">선택완료</button>
                 </div>
                 <div class="native-inputs wheel-mode">
                     <div class="wheel-col" id="wheel-h">
