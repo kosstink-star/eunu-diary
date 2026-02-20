@@ -107,6 +107,30 @@
                 <button class="submit-btn" id="save-btn" style="margin-top:20px;">저장하기</button>
             </div>
         </div>
+        <div class="context-menu-overlay" id="context-menu-overlay">
+            <div class="context-menu">
+                <div class="context-menu-item" id="ctx-edit">
+                    <span>수정하기</span>
+                    <i class="fas fa-pencil-alt"></i>
+                </div>
+                <div class="context-menu-item delete" id="ctx-delete">
+                    <span>삭제하기</span>
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+            </div>
+        </div>
+        <div class="dt-picker-overlay" id="dt-picker-overlay">
+            <div class="dt-picker-container">
+                <div class="dt-picker-header">
+                    <button onclick="document.getElementById('dt-picker-overlay').style.display='none'">취소</button>
+                    <button style="color:#007aff" id="dt-done">선택완료</button>
+                </div>
+                <div class="native-inputs">
+                    <input type="number" id="dt-h" min="0" max="23">
+                    <input type="number" id="dt-m" min="0" max="59">
+                </div>
+            </div>
+        </div>
     </div>
     <script src="app.js"></script>
 </body>
