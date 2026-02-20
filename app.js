@@ -97,9 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="form-group">
                         <label>종류</label>
                         <select id="input-sub-type">
-                            <option value="분유">분유</option>
-                            <option value="모유">모유</option>
-                            <option value="이유식">이유식</option>
+                            <option value="식사">식사</option>
+                            <option value="간식">간식</option>
                         </select>
                     </div>
                     <div class="form-group">
