@@ -16,7 +16,7 @@
 <body>
     <div id="app">
         <header>
-            <h1>우리아이 성장일기</h1>
+            <h1>우리은우 성장일기</h1>
         </header>
 
         <main class="dashboard">
@@ -50,14 +50,6 @@
                 </div>
                 <div id="timeline">
                     <!-- 타임라인 아이템이 여기에 동적으로 추가됩니다 -->
-                    <div class="diary-item">
-                        <span class="time">14:00</span>
-                        <div class="content">식사 완료</div>
-                    </div>
-                    <div class="diary-item">
-                        <span class="time">13:10</span>
-                        <div class="content">기저귀 교체 (소변)</div>
-                    </div>
                 </div>
             </section>
         </main>
@@ -68,6 +60,19 @@
             <div class="nav-item"><i class="fas fa-calendar-alt"></i></div>
             <div class="nav-item"><i class="fas fa-cog"></i></div>
         </nav>
+
+        <!-- Modal Overlay -->
+        <div class="modal-overlay" id="modal-overlay">
+            <div class="modal" id="record-modal">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="modal-title">활동 기록</h3>
+                    <button class="close-btn" id="close-modal">&times;</button>
+                </div>
+                <div id="modal-body">
+                    <!-- Modal content injected by JS -->
+                </div>
+            </div>
+        </div>
     </div>
     <script src="app.js"></script>
 </body>
