@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('우리은우 성장일기 v3.9 (Record Management) 로드 완료');
+    console.log('우리은우 성장일기 v4.0 (Compact UI & Full Fix) 로드 완료');
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
@@ -110,37 +110,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const sorted = [...records].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
         timeline.innerHTML = '';
         sorted.forEach(r => {
+            if (!r.id) r.id = 'rec_' + Math.random().toString(36).substr(2, 9);
             const item = document.createElement('div');
             item.className = `diary-item type-${r.type}`;
             const iconClass = typeIcons[r.type] || 'fa-check-circle';
 
-            // Generate unique ID if missing
-            if (!r.id) r.id = 'rec_' + Math.random().toString(36).substr(2, 9);
-
             item.innerHTML = `
                 <span class="time">${getTimeString(r.timestamp)}</span>
                 <div class="content">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <i class="fas ${iconClass}" style="color:var(--primary-color); font-size:0.8rem"></i>
+                    <div style="display:flex; align-items:center; gap:8px; padding-right:15px;">
+                        <i class="fas ${iconClass}" style="color:var(--primary-color); font-size:0.85rem"></i>
                         <span>${r.content}</span>
                     </div>
                     ${r.imageData ? `<img src="${r.imageData}" class="timeline-img">` : ''}
                     <div class="item-actions">
-                        <button class="action-btn edit" data-id="${r.id}"><i class="fas fa-pen"></i></button>
-                        <button class="action-btn delete" data-id="${r.id}"><i class="fas fa-trash"></i></button>
+                        <button class="action-btn edit" data-id="${r.id}" title="수정"><i class="fas fa-pen"></i></button>
+                        <button class="action-btn delete" data-id="${r.id}" title="삭제"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `;
             timeline.appendChild(item);
         });
 
-        // Add event listeners for edit/delete
-        document.querySelectorAll('.action-btn.edit').forEach(btn => {
-            btn.onclick = () => openModal('edit', btn.dataset.id);
-        });
-        document.querySelectorAll('.action-btn.delete').forEach(btn => {
-            btn.onclick = () => deleteRecord(btn.dataset.id);
-        });
+        document.querySelectorAll('.action-btn.edit').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); openModal('edit', btn.dataset.id); });
+        document.querySelectorAll('.action-btn.delete').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); deleteRecord(btn.dataset.id); });
 
         Object.keys(typeIcons).forEach(type => {
             const card = document.getElementById(`btn-${type}`);
@@ -216,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('set-export').onclick = () => {
             const blob = new Blob([JSON.stringify({ records, growthData, profile })], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'baby_diary_backup.json'; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = 'baby_diary.json'; a.click();
         };
         document.getElementById('set-reset').onclick = () => { if (confirm('모든 기록을 삭제하시겠습니까?')) { records = []; growthData = []; saveAll(); render(); } };
     }
@@ -300,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn.onclick = closeModal;
     modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
 
-    // --- Init All Buttons ---
+    // --- Init ---
     Object.keys(typeIcons).forEach(id => {
         const btn = document.getElementById(`btn-${id}`);
         if (btn) btn.onclick = () => openModal(id);
