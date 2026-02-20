@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('육아 다이어리 앱 v3.5 (Health, Bath & Photos) 로드 완료');
+    console.log('육아 다이어리 앱 v3.6 (Daily Diary Upgrade) 로드 완료');
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
@@ -104,11 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderHome() {
         const timeline = document.getElementById('timeline');
-        const sortedRecords = [...records].sort((a, b) => b.timestamp - a.timestamp).slice(0, 30);
+        const sortedRecords = [...records].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
         timeline.innerHTML = '';
         sortedRecords.forEach(record => {
             const item = document.createElement('div');
-            item.className = 'diary-item';
+            item.className = `diary-item type-${record.type}`;
 
             let imgHtml = record.imageData ? `<img src="${record.imageData}" class="timeline-img">` : '';
 
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!card) return;
             const statValue = card.querySelector('.stat-value');
             if (type === 'photo') {
-                statValue.innerText = `${records.filter(r => r.type === 'photo').length}장의 사진`;
+                statValue.innerText = `${records.filter(r => r.type === 'photo').length}개의 일기`;
             } else {
                 const last = records.filter(r => r.type === type).sort((a, b) => b.timestamp - a.timestamp)[0];
                 statValue.innerText = last ? getTimeAgo(last.timestamp) : '기록 없음';
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Graph & Calendar (Keep same as v3.1) ---
+    // --- Graph & Calendar ---
     function renderGraph() {
         const ctx = document.getElementById('growthChart')?.getContext('2d');
         if (!ctx) return;
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Modal Implementation ---
+    // --- Modal Logic ---
     function openModal(type) {
         modalOverlay.style.display = 'flex';
         let content = '';
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 content = `<div class="form-group"><label>상태</label><select id="in-sub"><option value="소변">소변</option><option value="대변">대변</option><option value="모두">소변 + 대변</option></select></div>`;
                 break;
             case 'bath':
-                modalTitle.innerText = '목욕 기록 �';
+                modalTitle.innerText = '목욕 기록 🛁';
                 content = `<div class="form-group"><label>종류</label><select id="in-sub"><option value="통목욕">통목욕</option><option value="간단 세안">간단 세안</option><option value="머리 감기">머리 감기</option></select></div>`;
                 break;
             case 'health':
@@ -234,13 +234,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 break;
             case 'photo':
-                modalTitle.innerText = '사진첩 추가 📸';
+                modalTitle.innerText = '하루일기 쓰기 ✍️';
                 content = `
                     <div class="img-preview-container" id="img-preview-box">
-                        <i class="fas fa-plus"></i>
-                        <input type="file" id="in-file" accept="image/*" style="display:none">
+                        <div class="img-preview-box-inner">
+                            <i class="fas fa-camera"></i>
+                            <span>사진을 선택하세요 (또는 촬영)</span>
+                        </div>
+                        <input type="file" id="in-file" accept="image/*" capture="environment" style="display:none">
                     </div>
-                    <div class="form-group"><label>사진 설명</label><input type="text" id="in-desc" placeholder="오늘의 추억을 적어보세요"></div>
+                    <div class="form-group">
+                        <label>오늘의 일기</label>
+                        <textarea id="in-desc" style="width:100%; height:100px; border:1px solid #eee; border-radius:12px; padding:10px; outline:none; font-size:0.9rem" placeholder="오늘 은우는 어땠나요? 소중한 순간을 기록해 보세요."></textarea>
+                    </div>
                 `;
                 break;
             case 'growth':
@@ -248,14 +254,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 content = `<div class="form-group"><label>키 (cm)</label><input type="number" step="0.1" id="in-h"></div><div class="form-group"><label>몸무게 (kg)</label><input type="number" step="0.1" id="in-w"></div>`;
                 break;
             case 'profile':
-                modalTitle.innerText = '프로필 수정 ✏️';
+                modalTitle.innerText = '아이 정보 수정 ✏️';
                 content = `<div class="form-group"><label>이름</label><input type="text" id="in-name" value="${profile.name}"></div><div class="form-group"><label>생일</label><input type="date" id="in-birth" value="${profile.birthdate}"></div>`;
                 break;
         }
 
         modalBody.innerHTML = content + `<button class="submit-btn" id="save-btn">저장하기</button>`;
 
-        // Special logic for Photo Upload
+        // Special logic for Photo Upload (Daily Diary)
         if (type === 'photo') {
             const previewBox = document.getElementById('img-preview-box');
             const fileIn = document.getElementById('in-file');
@@ -267,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     reader.onload = (re) => {
                         currentImageData = re.target.result;
                         previewBox.innerHTML = `<img src="${currentImageData}">`;
+                        previewBox.classList.add('has-image');
                     };
                     reader.readAsDataURL(file);
                 }
@@ -277,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'feed') addRecord('feed', `🍼 ${document.getElementById('in-sub').value} ${document.getElementById('in-amt').value}ml 완료`);
             else if (type === 'sleep') addRecord('sleep', `💤 수면: ${document.getElementById('in-sub').value}`);
             else if (type === 'diaper') addRecord('diaper', `🧷 기저귀: ${document.getElementById('in-sub').value}`);
-            else if (type === 'bath') addRecord('bath', `� 목욕: ${document.getElementById('in-sub').value}`);
+            else if (type === 'bath') addRecord('bath', `🛁 목욕: ${document.getElementById('in-sub').value}`);
             else if (type === 'health') {
                 const temp = document.getElementById('in-temp').value;
                 const sub = document.getElementById('in-sub').value;
@@ -286,7 +293,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             else if (type === 'photo') {
                 const desc = document.getElementById('in-desc').value;
-                if (currentImageData) addRecord('photo', `📸 ${desc}`, new Date().getTime(), currentImageData);
+                if (!desc && !currentImageData) {
+                    alert('내용이나 사진을 입력해주세요!');
+                    return;
+                }
+                addRecord('photo', `${desc || '오늘의 일기'}`, new Date().getTime(), currentImageData);
             }
             else if (type === 'growth') {
                 growthData.push({ height: document.getElementById('in-h').value, weight: document.getElementById('in-w').value, timestamp: new Date().getTime() });
@@ -307,23 +318,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Init ---
     ['feed', 'sleep', 'diaper', 'photo', 'health', 'bath'].forEach(id => {
-        document.getElementById(`btn-${id}`).onclick = () => openModal(id);
+        const btn = document.getElementById(`btn-${id}`);
+        if (btn) btn.onclick = () => openModal(id);
     });
     const addGrowth = document.getElementById('btn-add-growth');
     if (addGrowth) addGrowth.onclick = () => openModal('growth');
-    document.querySelector('.add-btn').onclick = () => openModal('feed');
+    const plusBtn = document.querySelector('.add-btn');
+    if (plusBtn) plusBtn.onclick = () => openModal('feed');
 
     function renderSettings() {
-        document.getElementById('set-profile').onclick = () => openModal('profile');
-        document.getElementById('set-export').onclick = () => {
+        const pBtn = document.getElementById('set-profile');
+        if (pBtn) pBtn.onclick = () => openModal('profile');
+
+        const eBtn = document.getElementById('set-export');
+        if (eBtn) eBtn.onclick = () => {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ records, growthData, profile }));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "eunu_diary_backup.json");
+            downloadAnchorNode.setAttribute("download", "baby_diary_backup.json");
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click(); downloadAnchorNode.remove();
         };
-        document.getElementById('set-reset').onclick = () => {
+
+        const rBtn = document.getElementById('set-reset');
+        if (rBtn) rBtn.onclick = () => {
             if (confirm('정말로 모든 기록을 삭제하시겠습니까?')) { records = []; growthData = []; saveAll(); render(); }
         };
     }

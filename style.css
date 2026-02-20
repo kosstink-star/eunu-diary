@@ -171,6 +171,18 @@ header h1 {
     max-height: 250px;
     object-fit: cover;
     border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.diary-item.type-photo .content {
+    background: #fff8e1;
+    /* Warm yellow for diary */
+    border: 1px solid #ffe082;
+}
+
+.diary-item.type-photo .content div {
+    font-weight: 500;
+    line-height: 1.6;
 }
 
 nav {
@@ -280,16 +292,33 @@ nav {
 
 .img-preview-container {
     width: 100%;
-    height: 150px;
-    border: 2px dashed #eee;
-    border-radius: 15px;
+    height: 180px;
+    border: 2px dashed #ff9a8b;
+    background: #fffafa;
+    border-radius: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     overflow: hidden;
     position: relative;
     cursor: pointer;
+}
+
+.img-preview-container.has-image {
+    border-style: solid;
+}
+
+.img-preview-container span {
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    margin-top: 10px;
+}
+
+.img-preview-box-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .img-preview-container img {
@@ -299,8 +328,8 @@ nav {
 }
 
 .img-preview-container i {
-    font-size: 2rem;
-    color: #ccc;
+    font-size: 2.5rem;
+    color: var(--primary-color);
 }
 
 .add-btn {
