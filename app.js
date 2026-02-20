@@ -198,8 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!el || !lbl) return;
             if (type === 'health') {
                 if (selTitle === '투약') {
-                    lbl.innerText = '투약 횟수';
-                    el.innerHTML = `${valAmount}<small>회</small>`;
+                    lbl.innerText = '투약 용량';
+                    el.innerHTML = `${valAmount}<small>ml</small>`;
                 } else {
                     lbl.innerText = '현재 측정값';
                     el.innerHTML = `${valAmount}.${valDecimal}<small>°C</small>`;
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('v-val-trigger').onclick = () => {
                 if (selTitle === '투약') {
                     openUniversalPicker({
-                        wheels: [{ min: 1, max: 20, init: valAmount, format: (v) => `${v} 회` }]
+                        wheels: [{ min: 1, max: 50, init: valAmount, format: (v) => `${v} ml` }]
                     }, (res) => { valAmount = res; updateValDisp(); });
                 } else {
                     openUniversalPicker({
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.selection-item').forEach(x => x.classList.remove('active'));
             i.classList.add('active'); selTitle = i.querySelector('label').innerText;
             if (type === 'health') {
-                if (selTitle === '투약' && valAmount > 20) valAmount = 1;
+                if (selTitle === '투약' && valAmount > 50) valAmount = 5;
                 else if (selTitle === '체온' && valAmount < 30) valAmount = 36;
                 updateValDisp();
             }
@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('save-final').onclick = () => {
             const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: document.getElementById('v-nt')?.value || "", imageData: selImg };
             if (type === 'feed') res.description = `${valAmount}ml`;
-            else if (type === 'health') res.description = selTitle === '투약' ? `${valAmount}회` : `${valAmount}.${valDecimal}°C`;
+            else if (type === 'health') res.description = selTitle === '투약' ? `${valAmount}ml` : `${valAmount}.${valDecimal}°C`;
             else if (type === 'sleep') { const dm = Math.floor((sleepEnd - sleepStart) / 60000); res.description = `${Math.floor(dm / 60)}시간 ${dm % 60}분`; res.dm = dm; res.timestamp = sleepEnd.getTime(); }
             else if (type === 'diaper') res.description = '기저귀 교체';
             else res.description = '기록 완료';
