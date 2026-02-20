@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const feedSum = f.filter(r => r.type === 'feed').reduce((a, c) => a + (parseInt(c.description) || 0), 0);
         const sleepSum = f.filter(r => r.type === 'sleep').reduce((a, c) => a + (c.dm || 0), 0);
         const diaperCnt = f.filter(r => r.type === 'diaper').length;
-        document.querySelector('#btn-feed .stat-val-small').innerText = `${feedSum}ml`;
+        document.querySelector('#btn-feed .stat-val-small').innerText = `${feedSum}g`;
         document.querySelector('#btn-diaper .stat-val-small').innerText = `${diaperCnt}회`;
         document.querySelector('#btn-sleep .stat-val-small').innerText = `${Math.floor(sleepSum / 60)}시간 ${sleepSum % 60}분`;
         document.querySelector('#btn-bath .stat-val-small').innerText = `${f.filter(r => r.type === 'bath').length}회`;
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.innerHTML = `${valAmount}.${valDecimal}<small>°C</small>`;
                 }
             }
-            else if (type === 'feed') el.innerHTML = `${valAmount}<small>ml</small>`;
+            else if (type === 'feed') el.innerHTML = `${valAmount}<small>g</small>`;
         };
 
         const headerHtml = `<div class="modal-header-row"><h3>${type === 'feed' ? '식사' : type === 'diaper' ? '배변' : type === 'sleep' ? '수면' : type === 'bath' ? '목욕' : type === 'health' ? '건강' : type === 'photo' ? '일기' : '추가하기'}</h3><i class="fas fa-times close-icon" onclick="window.closeModal()"></i></div>
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     html = `${headerHtml}<div class="selection-grid">
                         <div class="selection-item ${selTitle === '식사' ? 'active' : ''}" data-val="f1"><div class="circle"><i class="fas fa-utensils"></i></div><label>식사</label></div>
                         <div class="selection-item ${selTitle === '간식' ? 'active' : ''}" data-val="f2"><div class="circle"><i class="fas fa-cookie"></i></div><label>간식</label></div>
-                    </div><div class="trigger-box" id="v-val-trigger"><span>기록된 섭취량</span><strong id="v-val-main">120<small>ml</small></strong></div><div class="note-container"><textarea id="v-nt" placeholder="메모를 입력하세요">${rec ? rec.notes || '' : ''}</textarea></div>`;
+                    </div><div class="trigger-box" id="v-val-trigger"><span>기록된 섭취량</span><strong id="v-val-main">120<small>g</small></strong></div><div class="note-container"><textarea id="v-nt" placeholder="메모를 입력하세요">${rec ? rec.notes || '' : ''}</textarea></div>`;
                     break;
                 case 'diaper':
                     selTitle = rec ? rec.title : '소변';
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (type === 'feed') {
             document.getElementById('v-val-trigger').onclick = () => openUniversalPicker({
-                wheels: [{ min: 0, max: 500, step: 5, init: valAmount, format: (v) => `${v} ml` }]
+                wheels: [{ min: 0, max: 500, step: 5, init: valAmount, format: (v) => `${v} g` }]
             }, (res) => { valAmount = res; updateValDisp(); });
         }
         if (type === 'health') {
@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('save-final').onclick = () => {
             const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: document.getElementById('v-nt')?.value || "", imageData: selImg };
-            if (type === 'feed') res.description = `${valAmount}ml`;
+            if (type === 'feed') res.description = `${valAmount}g`;
             else if (type === 'health') res.description = selTitle === '투약' ? `${valAmount}ml` : `${valAmount}.${valDecimal}°C`;
             else if (type === 'sleep') { const dm = Math.floor((sleepEnd - sleepStart) / 60000); res.description = `${Math.floor(dm / 60)}시간 ${dm % 60}분`; res.dm = dm; res.timestamp = sleepEnd.getTime(); }
             else if (type === 'diaper') res.description = '기저귀 교체';

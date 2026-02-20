@@ -706,3 +706,139 @@ nav {
 .nav-item.active {
     color: #ff6a88;
 }
+
+/* --- Content Views (Graph, Settings) Premium Styles --- */
+.content-view {
+    flex: 1;
+    overflow-y: auto;
+    background: #fdfdfd;
+}
+
+.view-header {
+    padding: 35px 25px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.view-header h2 {
+    font-size: 1.8rem;
+    font-weight: 950;
+    color: #111;
+    letter-spacing: -1px;
+}
+
+.btn-premium {
+    background: var(--primary-gradient);
+    color: #fff;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 16px;
+    font-weight: 900;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 15px var(--accent-glow);
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-premium:active {
+    transform: scale(0.95);
+    opacity: 0.9;
+}
+
+.content-inner {
+    padding: 0 25px 40px;
+}
+
+.info-card {
+    background: #f0f7ff;
+    padding: 18px 22px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #e1efff;
+}
+
+.info-card p {
+    font-size: 0.9rem;
+    color: #448aff;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-wrapper {
+    background: #fff;
+    border-radius: 30px;
+    padding: 25px 15px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f8f8f8;
+}
+
+/* Settings Premium Styling */
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.setting-item {
+    background: #fff;
+    padding: 22px;
+    border-radius: 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.02);
+    border: 1px solid #f9f9f9;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.setting-item:active {
+    transform: scale(0.98);
+    background: #fcfcfc;
+}
+
+.setting-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 20px;
+    background: #f5faff;
+    color: #1e88e5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem;
+}
+
+.setting-item.delete .setting-icon {
+    background: #fff5f5;
+    color: #ff6a88;
+}
+
+.setting-info {
+    flex: 1;
+}
+
+.setting-info strong {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 900;
+    margin-bottom: 4px;
+    color: #111;
+}
+
+.setting-info span {
+    font-size: 0.85rem;
+    color: #999;
+    font-weight: 700;
+}
+
+.setting-item .arrow {
+    color: #ddd;
+    font-size: 0.9rem;
+}
