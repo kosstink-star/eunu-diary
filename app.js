@@ -1,10 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('우리은우 성장일기 v9.5 (Final UX Polish) 로드 완료');
+    console.log('우리은우 성장일기 v10.0 (D-Day & Wheel Picker) 로드 완료');
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
     let growthData = JSON.parse(localStorage.getItem('babyGrowth')) || [];
-    let profile = JSON.parse(localStorage.getItem('babyProfile')) || { name: '우리은우' };
+    let profile = JSON.parse(localStorage.getItem('babyProfile')) || {
+        name: '우리은우',
+        birthdate: '2026-02-15' // Default birthdate for D-day calculation
+    };
     let currentView = 'home', chart = null, selectedDate = new Date();
 
     const selectors = {
@@ -16,7 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
         home: document.getElementById('view-home'),
         graph: document.getElementById('view-graph'),
         calendar: document.getElementById('view-calendar'),
-        settings: document.getElementById('view-settings')
+        settings: document.getElementById('view-settings'),
+        dDayText: document.getElementById('d-day-text')
     };
 
     const saveAll = () => {
@@ -32,6 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일 (${isToday ? '오늘' : days[d.getDay()]})`;
     };
 
+    const calculateDDay = () => {
+        if (!profile.birthdate) return 'D+??';
+        const birth = new Date(profile.birthdate);
+        const today = new Date();
+        const diffTime = today - birth;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        return `D+${diffDays}`;
+    };
+
     const switchView = (vn) => {
         Object.keys(selectors).forEach(k => { if (selectors[k]?.tagName === 'MAIN') selectors[k].style.display = (k === vn) ? 'block' : 'none'; });
         selectors.navItems.forEach(i => i.classList.toggle('active', i.dataset.view === vn));
@@ -43,12 +56,56 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.date-nav .fa-chevron-right').onclick = () => { selectedDate.setDate(selectedDate.getDate() + 1); render(); };
     if (document.querySelector('.back-btn')) document.querySelector('.back-btn').onclick = () => switchView('home');
 
+    // --- Wheel Picker Logic ---
+    const initWheel = (type, max) => {
+        const scroller = document.getElementById(`scroller-${type}`);
+        if (!scroller) return;
+        scroller.innerHTML = '';
+        for (let i = 0; i <= max; i++) {
+            const el = document.createElement('div');
+            el.className = 'wheel-item';
+            el.innerText = String(i).padStart(2, '0');
+            scroller.appendChild(el);
+        }
+
+        const col = scroller.parentElement;
+        col.onscroll = () => {
+            const idx = Math.round(col.scrollTop / 40);
+            const items = scroller.querySelectorAll('.wheel-item');
+            items.forEach((it, i) => it.classList.toggle('selected', i === idx));
+            document.getElementById(`dt-${type}`).value = idx;
+        };
+    };
+
+    initWheel('h', 23);
+    initWheel('m', 59);
+
+    function openPicker(dt, cb) {
+        selectors.dtPickerOverlay.style.display = 'flex';
+        const h = dt.getHours(), m = dt.getMinutes();
+
+        const hCol = document.getElementById('wheel-h'), mCol = document.getElementById('wheel-m');
+        // Wait a bit for display flex to take effect before scrolling
+        setTimeout(() => {
+            hCol.scrollTop = h * 40;
+            mCol.scrollTop = m * 40;
+        }, 50);
+
+        document.getElementById('dt-cancel').onclick = () => selectors.dtPickerOverlay.style.display = 'none';
+        document.getElementById('dt-done').onclick = () => {
+            const finalH = parseInt(document.getElementById('dt-h').value);
+            const finalM = parseInt(document.getElementById('dt-m').value);
+            cb(finalH, finalM);
+            selectors.dtPickerOverlay.style.display = 'none';
+        };
+    }
+
     // --- Long Press Logic ---
-    let lpTimer, lpId = null, isLpActive = false;
+    let lpTimer, lpId = null;
     function handleStart(id) {
         handleEnd();
         lpTimer = setTimeout(() => {
-            lpId = id; isLpActive = true;
+            lpId = id;
             selectors.contextMenuOverlay.style.display = 'flex';
         }, 700);
     }
@@ -66,18 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Native Time Picker ---
-    function openPicker(dt, cb) {
-        selectors.dtPickerOverlay.style.display = 'flex';
-        const hIn = document.getElementById('dt-h'), mIn = document.getElementById('dt-m');
-        hIn.value = dt.getHours(); mIn.value = dt.getMinutes();
-        document.getElementById('dt-cancel').onclick = () => selectors.dtPickerOverlay.style.display = 'none';
-        document.getElementById('dt-done').onclick = () => {
-            cb(parseInt(hIn.value), parseInt(mIn.value));
-            selectors.dtPickerOverlay.style.display = 'none';
-        };
-    }
-
     // --- Rendering ---
     function render() {
         if (currentView === 'home') renderHome();
@@ -87,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderHome() {
+        if (selectors.dDayText) selectors.dDayText.innerText = calculateDDay();
         const title = document.querySelector('header h1');
         if (title) title.innerText = `${profile.name} 육아 기록`;
         const dtTxt = document.getElementById('current-date-text');
@@ -123,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
             timeline.appendChild(el);
         });
 
-        // Update Stats
         const feedSum = f.filter(r => r.type === 'feed').reduce((a, c) => a + (parseInt(c.description) || 0), 0);
         const sleepSum = f.filter(r => r.type === 'sleep').reduce((a, c) => a + (c.dm || 0), 0);
         document.querySelector('#btn-feed .stat-val-small').innerText = `${feedSum}ml`;
@@ -136,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.editRec = (id) => { const r = records.find(x => x.id === id); if (r) openModal(r.type, id); };
 
-    // --- Modal Implementation ---
     function openModal(type, rid = null) {
         selectors.modalOverlay.style.display = 'flex';
         let html = '';
@@ -146,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!rec) { const n = new Date(); curDt.setHours(n.getHours()); curDt.setMinutes(n.getMinutes()); }
 
         const refreshDt = () => {
-            const ds = getDayStr(curDt).replace(/오늘|일|월|화|수|목|금|토|\(|\)/g, (m) => m === '(' ? '' : m === ')' ? '' : ''); // Simplified
             const disp = `${curDt.getFullYear()}.${String(curDt.getMonth() + 1).padStart(2, '0')}.${String(curDt.getDate()).padStart(2, '0')} 금 ${getTimeStr(curDt.getTime())}`;
             const el = document.getElementById('modal-dt-disp');
             if (el) el.innerHTML = `<i class="far fa-calendar-alt"></i> ${disp} <i class="fas fa-chevron-down"></i>`;
@@ -234,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.delMod = (id) => delRec(id);
     selectors.modalOverlay.onclick = (e) => { if (e.target === selectors.modalOverlay) closeModal(); };
 
-    // --- Others ---
     function renderGraph() {
         const ctx = document.getElementById('growthChart')?.getContext('2d'); if (!ctx) return;
         const s = [...growthData].sort((a, b) => a.timestamp - b.timestamp); if (chart) chart.destroy();
@@ -252,7 +294,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.sd = (y, m, d) => { selectedDate = new Date(y, m, d); switchView('home'); };
     function renderSettings() {
-        document.getElementById('set-profile').onclick = () => { const n = prompt('이름', profile.name); if (n) { profile.name = n; saveAll(); render(); } };
+        document.getElementById('set-profile').onclick = () => {
+            const n = prompt('이름', profile.name);
+            const b = prompt('태어난 날짜 (YYYY-MM-DD)', profile.birthdate);
+            if (n) profile.name = n;
+            if (b) profile.birthdate = b;
+            saveAll(); render();
+        };
         document.getElementById('set-reset').onclick = () => { if (confirm('모든 데이터를 삭제하시겠습니까?')) { records = []; growthData = []; saveAll(); render(); } };
     }
 

@@ -50,6 +50,28 @@ header {
     border-bottom: 1px solid var(--border-color);
 }
 
+header .header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+header .name-info {
+    display: flex;
+    flex-direction: column;
+}
+
+header .d-day-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    background: #fff0ed;
+    padding: 2px 8px;
+    border-radius: 6px;
+    width: fit-content;
+    margin-top: 2px;
+}
+
 header .back-btn {
     font-size: 1.2rem;
     color: #666;
@@ -593,4 +615,62 @@ nav {
     box-shadow: 0 10px 25px rgba(255, 154, 139, 0.4);
     border: none;
     z-index: 9;
+}
+
+/* Wheel Mode Styling */
+.wheel-mode {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+    background: #fdfdfd;
+    border-radius: 15px;
+    mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
+}
+
+.wheel-col {
+    flex: 1;
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.wheel-col::-webkit-scrollbar {
+    display: none;
+}
+
+.wheel-scroller {
+    padding: 70px 0;
+    /* Padding to center items */
+}
+
+.wheel-item {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ccc;
+    scroll-snap-align: center;
+    transition: 0.2s;
+}
+
+.wheel-item.selected {
+    color: #333;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.wheel-separator {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #333;
+    padding: 0 10px;
+    z-index: 2;
 }

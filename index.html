@@ -17,11 +17,13 @@
 
 <body>
     <div id="app">
-        <header>
+        <div class="header-left">
             <i class="fas fa-arrow-left back-btn"></i>
-            <h1>우리은우 육아 기록</h1>
-            <div class="right-placeholder"></div>
-        </header>
+            <div class="name-info">
+                <h1>우리은우 육아 기록</h1>
+                <span class="d-day-badge" id="d-day-text">D+??</span>
+            </div>
+        </div>
 
         <main class="dashboard" id="view-home">
             <div class="date-nav">
@@ -134,11 +136,18 @@
                     <button id="dt-cancel">취소</button>
                     <button style="color:#007aff" id="dt-done">선택완료</button>
                 </div>
-                <div class="native-inputs">
-                    <input type="number" id="dt-h" min="0" max="23">
-                    <span style="font-size:1.5rem; font-weight:700;">:</span>
-                    <input type="number" id="dt-m" min="0" max="59">
+                <div class="native-inputs wheel-mode">
+                    <div class="wheel-col" id="wheel-h">
+                        <div class="wheel-scroller" id="scroller-h"></div>
+                    </div>
+                    <span class="wheel-separator">:</span>
+                    <div class="wheel-col" id="wheel-m">
+                        <div class="wheel-scroller" id="scroller-m"></div>
+                    </div>
                 </div>
+                <!-- Hidden inputs for legacy compat if needed, but we'll use value from scroller -->
+                <input type="hidden" id="dt-h" value="0">
+                <input type="hidden" id="dt-m" value="0">
             </div>
         </div>
     </div>
