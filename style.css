@@ -354,15 +354,251 @@ header .right-placeholder {
     background: #fcfcfc;
 }
 
-.submit-btn {
-    width: 100%;
-    padding: 16px;
-    background: #333;
-    color: white;
-    border: none;
+/* Time Picker for Sleep */
+.time-picker-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+/* Sleep Picker Refinement */
+.time-picker-box {
+    border: 1px solid #efefef;
+    border-radius: 12px;
+    padding: 18px 10px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Meal Specifics */
+.amount-box {
+    border: 1px solid #efefef;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    margin-top: 20px;
+    background: #fff;
+    font-size: 1.1rem;
+    color: #888;
+}
+
+.amount-box strong {
+    font-size: 1.6rem;
+    color: #333;
+    margin: 0 5px;
+}
+
+.note-container {
+    margin-top: 15px;
+    position: relative;
+    border: 1px solid #efefef;
     border-radius: 18px;
+    padding: 15px;
+    background: #fff;
+    min-height: 120px;
+}
+
+.note-container textarea {
+    width: 100%;
+    border: none;
+    resize: none;
+    font-size: 0.95rem;
+    color: #444;
+    outline: none;
+    min-height: 80px;
+    background: transparent;
+}
+
+.char-counter {
+    position: absolute;
+    bottom: 12px;
+    right: 15px;
+    font-size: 0.75rem;
+    color: #bbb;
+}
+
+.time-picker-box .label-label {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.time-picker-box .time-inputs {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.time-picker-box input {
+    width: 35px;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 0;
+    outline: none;
+}
+
+.time-picker-box span {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.centered-icon-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0 30px 0;
+}
+
+.centered-icon-box .circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    background: #e0f7fa;
+    color: #00acc1;
+    border: 2px solid #b2ebf2;
+}
+
+.centered-icon-box label {
+    font-weight: 800;
+    color: #00acc1;
+    font-size: 1rem;
+}
+
+.selection-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 25px 0 35px 0;
+}
+
+.selection-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.selection-item .circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: #f8f8f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.6rem;
+    color: #bbb;
+    border: 2px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.selection-item[data-val="meal"].active .circle {
+    background: #fff9e6;
+    border-color: #ffe082;
+    color: #ffa000;
+}
+
+.selection-item[data-val="snack"].active .circle {
+    background: #e0f2f1;
+    border-color: #b2dfdb;
+    color: #00897b;
+}
+
+.selection-item[data-val="pee"].active .circle {
+    background: #f1f8e9;
+    border-color: #dcedc8;
+    color: #7cb342;
+}
+
+.selection-item[data-val="poo"].active .circle {
+    background: #efebe9;
+    border-color: #d7ccc8;
+    color: #8d6e63;
+}
+
+.selection-item[data-val="both"].active .circle {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #6b7280;
+}
+
+.selection-item label {
+    font-size: 0.85rem;
+    color: #999;
+    font-weight: 500;
+}
+
+.selection-item.active label {
+    color: #444;
+    font-weight: 800;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #f8f8f8;
+}
+
+.modal-footer .btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 20px;
     font-weight: 700;
     font-size: 1rem;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background: white;
+    color: #888;
+    border: 1px solid #ddd !important;
+}
+
+.btn-save {
+    background: #b2ebf2;
+    color: #00acc1;
+}
+
+.modal-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.modal-header-row h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.modal-header-row .delete-icon {
+    color: #aaa;
+    font-size: 1.2rem;
+}
+
+.modal-date-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 25px;
 }
 
 /* Nav */
