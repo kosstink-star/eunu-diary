@@ -260,12 +260,12 @@ header {
 }
 
 .stat-card {
-    min-width: 86px;
+    min-width: 90px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    padding: 18px 12px;
+    padding: 18px 8px;
     border-radius: 28px;
     background: #fff;
     border: 1px solid #f6f6f6;
@@ -289,9 +289,11 @@ header {
 }
 
 .stat-val-small {
-    font-size: 0.9rem;
-    font-weight: 900;
+    font-size: 0.85rem;
+    font-weight: 950;
     color: #111;
+    white-space: nowrap;
+    letter-spacing: -0.5px;
 }
 
 .stat-card[data-type="feed"] .icon-box {
