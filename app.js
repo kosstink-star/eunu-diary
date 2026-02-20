@@ -126,8 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${r.imageData ? `<img src="${r.imageData}" class="timeline-img">` : ''}
                     <div class="item-actions">
-                        <button class="action-btn edit" data-id="${r.id}"><i class="fas fa-edit"></i> 수정</button>
-                        <button class="action-btn delete" data-id="${r.id}"><i class="fas fa-trash-alt"></i> 삭제</button>
+                        <button class="action-btn edit" data-id="${r.id}"><i class="fas fa-pen"></i></button>
+                        <button class="action-btn delete" data-id="${r.id}"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `;
