@@ -22,16 +22,16 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
 }
 
 #app {
     width: 100%;
     max-width: 450px;
-    height: 90vh;
+    height: 100vh;
     background: var(--card-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-radius: 40px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow: var(--shadow);
     overflow: hidden;
@@ -41,22 +41,25 @@ body {
 }
 
 header {
-    padding: 30px 20px;
+    padding: 20px;
     text-align: center;
+    background: white;
 }
 
 header h1 {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 700;
     background: linear-gradient(to right, #ff9a8b, #ff6b6b);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-.dashboard {
+.dashboard,
+.content-view {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
+    width: 100%;
 }
 
 .stat-grid {
@@ -79,8 +82,8 @@ header h1 {
     gap: 10px;
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
+.stat-card:active {
+    transform: scale(0.95);
 }
 
 .stat-card i {
@@ -133,7 +136,7 @@ header h1 {
 }
 
 nav {
-    height: 80px;
+    height: 70px;
     background: white;
     display: flex;
     justify-content: space-around;
@@ -199,19 +202,19 @@ nav {
 .close-btn {
     border: none;
     background: none;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     color: #ccc;
     cursor: pointer;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
     display: block;
     font-size: 0.9rem;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: 600;
 }
 
@@ -225,10 +228,6 @@ nav {
     outline: none;
 }
 
-.form-group input:focus {
-    border-color: var(--primary-color);
-}
-
 .submit-btn {
     width: 100%;
     padding: 15px;
@@ -239,19 +238,139 @@ nav {
     font-weight: 700;
     border-radius: 15px;
     cursor: pointer;
-    transition: background 0.3s;
-}
-
-.submit-btn:hover {
-    background: var(--accent-color);
 }
 
 .add-btn {
     background: var(--primary-color);
     color: white;
     border: none;
-    width: 30px;
-    height: 30px;
+    width: 25px;
+    height: 25px;
     border-radius: 50%;
     cursor: pointer;
+}
+
+/* Content Views */
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.add-stat-btn {
+    padding: 6px 12px;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.growth-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.stat-item {
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.stat-item .value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Calendar */
+#calendar-container {
+    background: white;
+    padding: 15px;
+    border-radius: 20px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px 15px;
+    font-weight: 700;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #bbb;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+}
+
+.calendar-day.today {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.calendar-day.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.calendar-day.has-record::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    width: 3px;
+    height: 3px;
+    background: var(--accent-color);
+    border-radius: 50%;
+}
+
+/* Settings */
+.settings-list {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.setting-item {
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid #f8f8f8;
+}
+
+.setting-item i {
+    color: #ccc;
+}
+
+.setting-item.danger {
+    color: var(--accent-color);
 }

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -19,27 +20,27 @@
             <h1>우리은우의 성장일기</h1>
         </header>
 
-        <main class="dashboard">
+        <main class="dashboard" id="view-home">
             <div class="stat-grid">
                 <div class="stat-card" id="btn-feed">
                     <i class="fas fa-baby-bottle"></i>
                     <span class="stat-label">식사</span>
-                    <span class="stat-value">2시간 전</span>
+                    <span class="stat-value">기록 없음</span>
                 </div>
                 <div class="stat-card" id="btn-sleep">
                     <i class="fas fa-moon"></i>
                     <span class="stat-label">수면</span>
-                    <span class="stat-value">현재 취침 중</span>
+                    <span class="stat-value">기록 없음</span>
                 </div>
                 <div class="stat-card" id="btn-diaper">
                     <i class="fas fa-poop"></i>
                     <span class="stat-label">기저귀</span>
-                    <span class="stat-value">1시간 전</span>
+                    <span class="stat-value">기록 없음</span>
                 </div>
                 <div class="stat-card" id="btn-photo">
                     <i class="fas fa-camera"></i>
                     <span class="stat-label">사진첩</span>
-                    <span class="stat-value">12장의 사진</span>
+                    <span class="stat-value">0장의 사진</span>
                 </div>
             </div>
 
@@ -54,11 +55,65 @@
             </section>
         </main>
 
+        <!-- Graph View -->
+        <main class="content-view" id="view-graph" style="display:none;">
+            <div class="view-header">
+                <h2>성장 그래프</h2>
+                <button class="add-stat-btn" id="btn-add-growth"><i class="fas fa-plus"></i> 기록</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="growthChart"></canvas>
+            </div>
+            <div class="growth-stats">
+                <div class="stat-item">
+                    <span class="label">최근 키</span>
+                    <span class="value" id="last-height">- cm</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label">최근 몸무게</span>
+                    <span class="value" id="last-weight">- kg</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Calendar View -->
+        <main class="content-view" id="view-calendar" style="display:none;">
+            <div class="view-header">
+                <h2>활동 달력</h2>
+            </div>
+            <div id="calendar-container"></div>
+            <div id="calendar-day-details" class="diary-section" style="margin-top: 20px;">
+                <h4 id="selected-date-label">날짜를 선택하세요</h4>
+                <div id="day-timeline"></div>
+            </div>
+        </main>
+
+        <!-- Settings View -->
+        <main class="content-view" id="view-settings" style="display:none;">
+            <div class="view-header">
+                <h2>설정</h2>
+            </div>
+            <div class="settings-list">
+                <div class="setting-item" id="set-profile">
+                    <i class="fas fa-user-circle"></i>
+                    <span>아이 프로필 수정</span>
+                </div>
+                <div class="setting-item" id="set-export">
+                    <i class="fas fa-file-export"></i>
+                    <span>데이터 내보내기 (JSON)</span>
+                </div>
+                <div class="setting-item danger" id="set-reset">
+                    <i class="fas fa-trash-alt"></i>
+                    <span>모든 기록 초기화</span>
+                </div>
+            </div>
+        </main>
+
         <nav>
-            <div class="nav-item active"><i class="fas fa-home"></i></div>
-            <div class="nav-item"><i class="fas fa-chart-line"></i></div>
-            <div class="nav-item"><i class="fas fa-calendar-alt"></i></div>
-            <div class="nav-item"><i class="fas fa-cog"></i></div>
+            <div class="nav-item active" data-view="home"><i class="fas fa-home"></i></div>
+            <div class="nav-item" data-view="graph"><i class="fas fa-chart-line"></i></div>
+            <div class="nav-item" data-view="calendar"><i class="fas fa-calendar-alt"></i></div>
+            <div class="nav-item" data-view="settings"><i class="fas fa-cog"></i></div>
         </nav>
 
         <!-- Modal Overlay -->
