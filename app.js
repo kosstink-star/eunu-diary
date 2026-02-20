@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('우리은우 성장일기 v5.0 (MamiTalk Full UI & Logic) 로드 완료');
+    console.log('우리은우 성장일기 v5.5 (Common Time Picker) 로드 완료');
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addRecord = (type, title, description, timestamp = new Date().getTime(), imageData = null, extra = {}) => {
         const id = 'rec_' + Math.random().toString(36).substr(2, 9);
-        records.push({ id, type, title, description, timestamp, imageData, ...extra });
+        records.push({ id, type, title, description, timestamp: Number(timestamp), imageData, ...extra });
         saveAll();
         render();
     };
@@ -68,7 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderHome() {
         const timeline = document.getElementById('timeline');
-        const sorted = [...records].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
+        // Sort by timestamp descending
+        const sorted = [...records].sort((a, b) => b.timestamp - a.timestamp).slice(0, 70);
         timeline.innerHTML = '';
 
         sorted.forEach(r => {
@@ -98,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timeline.appendChild(item);
         });
 
-        // Update Stats
+        // Update Stats (Today only)
         const todayStr = new Date().toLocaleDateString();
         const todayRecs = records.filter(r => new Date(r.timestamp).toLocaleDateString() === todayStr);
 
@@ -113,10 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('#btn-feed .stat-val-small').innerText = `${feedTotal}ml`;
         document.querySelector('#btn-diaper .stat-val-small').innerText = `${diaperCount}회`;
         document.querySelector('#btn-sleep .stat-val-small').innerText = `${sleepH}시간 ${sleepM}분`;
+        document.querySelector('#btn-photo .stat-val-small').innerText = `${records.filter(r => r.type === 'photo').length}개`;
     }
 
     window.confirmDelete = (id) => deleteRecord(id);
 
+    // --- Modal Logic ---
     function openModal(type) {
         modalOverlay.style.display = 'flex';
         let content = '';
@@ -124,22 +127,30 @@ document.addEventListener('DOMContentLoaded', () => {
         let selectedSub = '';
 
         const now = new Date();
-        const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} 금 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
+
+        // Base Template for Time Selection
+        const timePickerHtml = `
+            <div class="time-picker-grid" style="margin-bottom:20px;">
+                <div class="time-picker-box" style="width:100%"><span class="label-label">시간 선택</span><div class="time-inputs"><input type="number" id="base-h" value="${now.getHours()}"><span>시</span><input type="number" id="base-m" value="${now.getMinutes()}"><span>분</span></div></div>
+            </div>
+        `;
 
         switch (type) {
             case 'feed':
                 modalTitle.innerText = '식사 기록 🍼';
                 content = `
                     <div class="modal-header-row"><h3>식사 기록</h3><i class="fas fa-trash-alt delete-icon"></i></div>
-                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr} <i class="fas fa-chevron-down"></i></div>
+                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr}</div>
+                    ${timePickerHtml}
                     <div class="selection-grid">
                         <div class="selection-item active" data-val="meal"><div class="circle"><i class="fas fa-utensils"></i></div><label>이유식</label></div>
                         <div class="selection-item" data-val="snack"><div class="circle"><i class="fas fa-cookie"></i></div><label>간식</label></div>
                     </div>
-                    <div class="amount-box">섭취량 <strong id="val-amt">200</strong> ml</div>
+                    <div class="amount-box">섭취량 <strong id="val-amt-display">200</strong> ml</div>
+                    <div class="form-group" style="padding:10px 0;"><input type="number" id="in-amt" value="200" style="text-align:center;"></div>
                     <div class="note-container">
                         <textarea id="in-notes" placeholder="기록을 남겨주세요"></textarea>
-                        <div class="char-counter">0/1000</div>
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'">취소</button>
@@ -152,7 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalTitle.innerText = '배변 기록 🧷';
                 content = `
                     <div class="modal-header-row"><h3>배변 기록</h3><i class="fas fa-trash-alt delete-icon"></i></div>
-                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr} <i class="fas fa-chevron-down"></i></div>
+                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr}</div>
+                    ${timePickerHtml}
                     <div class="selection-grid">
                         <div class="selection-item" data-val="pee"><div class="circle"><i class="fas fa-tint"></i></div><label>소변</label></div>
                         <div class="selection-item active" data-val="poo"><div class="circle"><i class="fas fa-poop"></i></div><label>대변</label></div>
@@ -172,11 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalTitle.innerText = '수면 기록 💤';
                 content = `
                     <div class="modal-header-row"><h3>수면 기록</h3><i class="fas fa-trash-alt delete-icon"></i></div>
-                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr} <i class="fas fa-chevron-down"></i></div>
+                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr}</div>
                     <div class="centered-icon-box"><div class="circle"><i class="fas fa-moon"></i></div><label>수면</label></div>
                     <div class="time-picker-grid">
                         <div class="time-picker-box"><span class="label-label">시작</span><div class="time-inputs"><input type="number" id="h1" value="16"><span>시</span><input type="number" id="m1" value="24"><span>분</span></div></div>
-                        <div class="time-picker-box"><span class="label-label">종류</span><div class="time-inputs"><input type="number" id="h2" value="17"><span>시</span><input type="number" id="m2" value="12"><span>분</span></div></div>
+                        <div class="time-picker-box"><span class="label-label">종료</span><div class="time-inputs"><input type="number" id="h2" value="${now.getHours()}"><span>시</span><input type="number" id="m2" value="${now.getMinutes()}"><span>분</span></div></div>
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'">취소</button>
@@ -185,47 +197,118 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 selectedSub = '수면';
                 break;
-            case 'health':
             case 'photo':
-            case 'growth':
-                // Keeping simple for now as per image wasn't provided for these
-                modalTitle.innerText = '기록 추가';
-                content = `<div class="form-group"><label>내용</label><input type="text" id="in-title" placeholder="입력..."></div><div class="form-group"><label>메모</label><textarea id="in-desc"></textarea></div><div class="modal-footer"><button class="btn btn-save" id="save-btn">저장</button></div>`;
+                modalTitle.innerText = '하루일기 ✍️';
+                content = `
+                    <div class="modal-header-row"><h3>하루일기</h3></div>
+                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr}</div>
+                    ${timePickerHtml}
+                    <div class="form-group" id="img-box" style="border:1px dashed #ccc; height:150px; display:flex; justify-content:center; align-items:center; border-radius:15px; cursor:pointer;"><i class="fas fa-camera"></i><input type="file" id="in-file" style="display:none" accept="image/*"></div>
+                    <div class="note-container">
+                        <textarea id="in-notes" placeholder="기록을 남겨주세요"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'">취소</button>
+                        <button class="btn btn-save" id="save-btn">저장</button>
+                    </div>
+                `;
+                selectedSub = '하루일기';
+                break;
+            case 'bath':
+                modalTitle.innerText = '목욕 기록 🛁';
+                content = `
+                    <div class="modal-header-row"><h3>목욕 기록</h3></div>
+                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr}</div>
+                    ${timePickerHtml}
+                    <div class="form-group"><input type="text" id="in-title" value="통목욕" style="text-align:center;"></div>
+                    <div class="note-container">
+                       <textarea id="in-notes" placeholder="기록을 남겨주세요"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'">취소</button>
+                        <button class="btn btn-save" id="save-btn">저장</button>
+                    </div>
+                `;
+                selectedSub = '목욕';
+                break;
+            case 'health':
+                modalTitle.innerText = '건강 기록 🏥';
+                content = `
+                    <div class="modal-header-row"><h3>건강 기록</h3></div>
+                    <div class="modal-date-picker"><i class="far fa-calendar-alt"></i> ${dateStr}</div>
+                    ${timePickerHtml}
+                    <div class="form-group"><input type="text" id="in-title" placeholder="병원 방문, 약 등" style="text-align:center;"></div>
+                    <div class="note-container">
+                       <textarea id="in-notes" placeholder="체온, 증상 등 기록"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-cancel" onclick="document.getElementById('modal-overlay').style.display='none'">취소</button>
+                        <button class="btn btn-save" id="save-btn">저장</button>
+                    </div>
+                `;
+                selectedSub = '건강';
                 break;
         }
 
         modalBody.innerHTML = content;
 
-        // Interaction logic for types
-        if (type === 'feed' || type === 'diaper') {
-            document.querySelectorAll('.selection-item').forEach(item => {
-                item.onclick = () => {
-                    document.querySelectorAll('.selection-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    selectedSub = item.querySelector('label').innerText;
-                };
-            });
+        // Sync Amount display for feed
+        const inAmt = document.getElementById('in-amt');
+        const valAmtDisplay = document.getElementById('val-amt-display');
+        if (inAmt && valAmtDisplay) {
+            inAmt.oninput = (e) => valAmtDisplay.innerText = e.target.value;
+        }
+
+        // Selection circle logic
+        document.querySelectorAll('.selection-item').forEach(item => {
+            item.onclick = () => {
+                document.querySelectorAll('.selection-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                selectedSub = item.querySelector('label').innerText;
+            };
+        });
+
+        // Photo upload
+        if (type === 'photo') {
+            const box = document.getElementById('img-box'), fin = document.getElementById('in-file');
+            box.onclick = () => fin.click();
+            fin.onchange = (e) => {
+                const f = e.target.files[0];
+                if (f) {
+                    const r = new FileReader(); r.onload = (re) => { currentImg = re.target.result; box.innerHTML = `<img src="${currentImg}" style="height:100%; border-radius:15px;">`; }; r.readAsDataURL(f);
+                }
+            };
         }
 
         const saveBtn = document.getElementById('save-btn');
         if (saveBtn) {
             saveBtn.onclick = () => {
+                // Get selected time
+                const selH = Number(document.getElementById('base-h')?.value || now.getHours());
+                const selM = Number(document.getElementById('base-m')?.value || now.getMinutes());
+                const targetTimestamp = new Date(now.getFullYear(), now.getMonth(), now.getDate(), selH, selM).getTime();
+
                 if (type === 'feed') {
                     const notes = document.getElementById('in-notes').value;
-                    addRecord('feed', selectedSub, '200ml', new Date().getTime(), null, { notes });
+                    const amt = document.getElementById('in-amt').value;
+                    addRecord('feed', selectedSub, `${amt}ml`, targetTimestamp, null, { notes });
                 } else if (type === 'diaper') {
                     const notes = document.getElementById('in-notes').value;
-                    addRecord('diaper', selectedSub, '1회', new Date().getTime(), null, { notes });
+                    addRecord('diaper', selectedSub, '1회', targetTimestamp, null, { notes });
                 } else if (type === 'sleep') {
-                    const h1 = parseInt(document.getElementById('h1').value), m1 = parseInt(document.getElementById('m1').value);
-                    const h2 = parseInt(document.getElementById('h2').value), m2 = parseInt(document.getElementById('m2').value);
+                    const h1 = Number(document.getElementById('h1').value), m1 = Number(document.getElementById('m1').value);
+                    const h2 = Number(document.getElementById('h2').value), m2 = Number(document.getElementById('m2').value);
                     const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
                     const dur = `${Math.floor(diff / 60)}시간 ${diff % 60}분`;
-                    addRecord('sleep', '수면', dur, new Date().getTime(), null, { duration: dur, durationMinutes: diff });
-                } else {
-                    const title = document.getElementById('in-title')?.value || '기록';
-                    const desc = document.getElementById('in-desc')?.value || '';
-                    addRecord(type, title, desc);
+                    const startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h2, m2).getTime(); // Use end time as record time
+                    addRecord('sleep', '수면', dur, startTime, null, { duration: dur, durationMinutes: diff });
+                } else if (type === 'photo') {
+                    const notes = document.getElementById('in-notes').value;
+                    addRecord('photo', '하루일기', '📖 오늘의 일기', targetTimestamp, currentImg, { notes });
+                } else if (type === 'bath' || type === 'health') {
+                    const title = document.getElementById('in-title').value || selectedSub;
+                    const notes = document.getElementById('in-notes').value;
+                    addRecord(type, title, '', targetTimestamp, null, { notes });
                 }
                 modalOverlay.style.display = 'none';
             };
@@ -238,9 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderGraph() {
         const ctx = document.getElementById('growthChart')?.getContext('2d');
         if (!ctx) return;
-
         const sorted = [...growthData].sort((a, b) => a.timestamp - b.timestamp);
-
         if (chart) chart.destroy();
         chart = new Chart(ctx, {
             type: 'line',
@@ -259,12 +340,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCalendar() {
         const container = document.getElementById('calendar-container');
         if (!container) return;
-
-        const year = currentCalDate.getFullYear();
-        const month = currentCalDate.getMonth();
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const lastDate = new Date(year, month + 1, 0).getDate();
+        const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth();
+        const firstDay = new Date(year, month, 1).getDay(), lastDate = new Date(year, month + 1, 0).getDate();
 
         let html = `
             <div class="calendar-wrapper" style="padding:20px;">
@@ -281,34 +358,23 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let d = 1; d <= lastDate; d++) {
             const dateKey = new Date(year, month, d).toLocaleDateString();
             const hasRecord = records.some(r => new Date(r.timestamp).toLocaleDateString() === dateKey);
-            html += `
-                <div style="padding:10px; border-radius:12px; font-size:0.9rem; position:relative; background:${hasRecord ? '#fff9e6' : '#f9f9f9'}; cursor:pointer;" onclick="alert('${month + 1}월 ${d}일 기록 확인')">
-                    ${d}
-                    ${hasRecord ? '<div style="position:absolute; bottom:4px; left:50%; transform:translateX(-50%); width:4px; height:4px; background:#ffa000; border-radius:50%;"></div>' : ''}
-                </div>
-            `;
+            html += `<div style="padding:10px; border-radius:12px; font-size:0.9rem; position:relative; background:${hasRecord ? '#fff9e6' : '#f9f9f9'}; cursor:pointer;">${d}${hasRecord ? '<div style="position:absolute; bottom:4px; left:50%; transform:translateX(-50%); width:4px; height:4px; background:#ffa000; border-radius:50%;"></div>' : ''}</div>`;
         }
-
         container.innerHTML = html + '</div></div>';
-
         document.getElementById('cal-prev').onclick = () => { currentCalDate.setMonth(month - 1); renderCalendar(); };
         document.getElementById('cal-next').onclick = () => { currentCalDate.setMonth(month + 1); renderCalendar(); };
     }
 
     function renderSettings() {
-        const setProfile = document.getElementById('set-profile');
-        if (setProfile) setProfile.onclick = () => {
+        document.getElementById('set-profile').onclick = () => {
             const name = prompt('아이 이름을 입력하세요', profile.name);
             if (name) { profile.name = name; saveAll(); render(); }
         };
-        const resetBtn = document.getElementById('set-reset');
-        if (resetBtn) resetBtn.onclick = () => { if (confirm('모든 기록을 삭제하시겠습니까?')) { records = []; growthData = []; saveAll(); render(); } };
-
-        const exportBtn = document.getElementById('set-export');
-        if (exportBtn) exportBtn.onclick = () => {
+        document.getElementById('set-reset').onclick = () => { if (confirm('모든 기록을 삭제하시겠습니까?')) { records = []; growthData = []; saveAll(); render(); } };
+        document.getElementById('set-export').onclick = () => {
             const blob = new Blob([JSON.stringify({ records, growthData, profile })], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'baby_diary_export.json'; a.click();
+            const a = document.createElement('a'); a.href = url; a.download = 'baby_diary.json'; a.click();
         };
     }
 
@@ -317,14 +383,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById(`btn-${type}`);
         if (btn) btn.onclick = () => openModal(type);
     });
-
     const addBtn = document.querySelector('.add-btn');
     if (addBtn) addBtn.onclick = () => openModal('feed');
-
     const growthBtn = document.getElementById('btn-add-growth');
     if (growthBtn) growthBtn.onclick = () => {
-        const h = prompt('키(cm)를 입력하세요');
-        const w = prompt('몸무게(kg)를 입력하세요');
+        const h = prompt('키(cm)', ''); const w = prompt('몸무게(kg)', '');
         if (h && w) { growthData.push({ height: parseFloat(h), weight: parseFloat(w), timestamp: new Date().getTime() }); saveAll(); renderGraph(); }
     };
 
