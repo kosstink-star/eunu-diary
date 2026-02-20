@@ -3,14 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>우리은우 성장일기 - Eunu's Diary</title>
     <meta name="description" content="우리 은우의 성장을 기록하고 관리하는 스마트한 육아 다이어리">
     <meta name="theme-color" content="#ffffff">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -18,16 +19,16 @@
     <div id="app">
         <header>
             <i class="fas fa-arrow-left back-btn"></i>
-            <h1>육아 기록</h1>
+            <h1>우리은우 육아 기록</h1>
             <div class="right-placeholder"></div>
         </header>
 
         <main class="dashboard" id="view-home">
             <div class="date-nav">
                 <i class="fas fa-chevron-left"></i>
-                <span><i class="far fa-calendar-alt"></i> <span id="current-date-text">02월 20일 (오늘)</span></span>
+                <div class="date-display"><i class="far fa-calendar-alt"></i> <span id="current-date-text">02월 20일
+                        (오늘)</span></div>
                 <i class="fas fa-chevron-right"></i>
-                <button class="pattern-btn">패턴</button>
             </div>
 
             <div class="stat-grid">
@@ -41,11 +42,11 @@
                 </div>
                 <div class="stat-card" data-type="sleep" id="btn-sleep">
                     <div class="icon-box"><i class="fas fa-moon"></i></div>
-                    <span class="stat-val-small">0시간 0분</span>
+                    <span class="stat-val-small">0시간</span>
                 </div>
                 <div class="stat-card" data-type="bath" id="btn-bath">
                     <div class="icon-box"><i class="fas fa-bath"></i></div>
-                    <span class="stat-val-small">0시간 0분</span>
+                    <span class="stat-val-small">0회</span>
                 </div>
                 <div class="stat-card" data-type="health" id="btn-health">
                     <div class="icon-box"><i class="fas fa-notes-medical"></i></div>
@@ -67,7 +68,9 @@
         <main class="content-view" id="view-graph" style="display:none;">
             <div class="view-header" style="padding:20px;">
                 <h2>성장 그래프</h2>
-                <button class="pattern-btn" id="btn-add-growth" style="position:static; margin-left:10px;">기록</button>
+                <button class="btn" id="btn-add-growth"
+                    style="background:var(--primary-color); color:white; width:auto; padding:5px 15px; font-size:0.8rem; border-radius:10px;">기록
+                    추가</button>
             </div>
             <div style="padding:0 20px;">
                 <canvas id="growthChart"></canvas>
@@ -85,11 +88,10 @@
             <div class="view-header" style="padding:20px;">
                 <h2>설정</h2>
             </div>
-            <div style="padding:20px;">
-                <button class="submit-btn" id="set-profile" style="margin-bottom:10px;">프로필 수정</button>
-                <button class="submit-btn" id="set-export" style="background:#eee; color:#333; margin-bottom:10px;">데이터
-                    내보내기</button>
-                <button class="submit-btn" id="set-reset" style="background:#ff6b6b; color:white;">초기화</button>
+            <div style="padding:20px; display:flex; flex-direction:column; gap:15px;">
+                <button class="btn btn-save" id="set-profile" style="background:#eee; color:#333;">프로필 수정</button>
+                <button class="btn btn-save" id="set-reset" style="background:#ffebee; color:#f44336;">전체 데이터
+                    초기화</button>
             </div>
         </main>
 
@@ -100,13 +102,19 @@
             <div class="nav-item" data-view="settings"><i class="fas fa-cog"></i></div>
         </nav>
 
+        <!-- Modals -->
         <div class="modal-overlay" id="modal-overlay">
             <div class="modal">
-                <h3 id="modal-title" style="margin-bottom:20px;">기록 추가</h3>
-                <div id="modal-body"></div>
-                <button class="submit-btn" id="save-btn" style="margin-top:20px;">저장하기</button>
+                <div id="modal-body">
+                    <!-- Dynamic Content -->
+                </div>
+                <!-- Save Button is inside modal-body injection for full control -->
             </div>
         </div>
+
+        <!-- Hidden Global Tooltip for JS to set Title -->
+        <h3 id="modal-title" style="display:none;"></h3>
+
         <div class="context-menu-overlay" id="context-menu-overlay">
             <div class="context-menu">
                 <div class="context-menu-item" id="ctx-edit">
@@ -119,14 +127,16 @@
                 </div>
             </div>
         </div>
+
         <div class="dt-picker-overlay" id="dt-picker-overlay">
             <div class="dt-picker-container">
                 <div class="dt-picker-header">
-                    <button onclick="document.getElementById('dt-picker-overlay').style.display='none'">취소</button>
+                    <button id="dt-cancel">취소</button>
                     <button style="color:#007aff" id="dt-done">선택완료</button>
                 </div>
                 <div class="native-inputs">
                     <input type="number" id="dt-h" min="0" max="23">
+                    <span style="font-size:1.5rem; font-weight:700;">:</span>
                     <input type="number" id="dt-m" min="0" max="59">
                 </div>
             </div>
