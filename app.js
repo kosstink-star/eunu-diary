@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('육아 다이어리 앱 v3.6 (Daily Diary Upgrade) 로드 완료');
+    console.log('우리은우 성장일기 v3.7 (Full Features & Bug Fix) 로드 완료');
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
@@ -12,24 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = 'home';
     let chart = null;
 
-    // --- Daily Tips ---
-    const tips = [
-        "아이와 눈을 맞추며 자주 말을 걸어주세요! 👶",
-        "수유 후에는 꼭 트림을 시켜주세요. 🍼",
-        "방 안의 온도는 22~24도, 습도는 50%가 적당해요. 🌡️",
-        "작은 소리에도 반응하며 교감하는 시간을 가져보세요.",
-        "엄마 아빠의 사랑이 아이에게 가장 큰 영양분입니다. ❤️",
-        "아이의 기저귀는 자주 확인해서 쾌적하게 해주세요. 🧷",
-        "충분한 휴식은 건강한 육아의 시작입니다!"
-    ];
-
     // --- Selectors ---
-    const appTitle = document.querySelector('header h1');
     const modalOverlay = document.getElementById('modal-overlay');
     const modalBody = document.getElementById('modal-body');
     const modalTitle = document.getElementById('modal-title');
     const closeBtn = document.getElementById('close-modal');
-
     const navItems = document.querySelectorAll('.nav-item');
     const views = {
         home: document.getElementById('view-home'),
@@ -39,62 +26,51 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Core Functions ---
-    function saveAll() {
+    const saveAll = () => {
         localStorage.setItem('babyRecords', JSON.stringify(records));
         localStorage.setItem('babyGrowth', JSON.stringify(growthData));
         localStorage.setItem('babyProfile', JSON.stringify(profile));
-    }
+    };
 
-    function addRecord(type, content, timestamp = new Date().getTime(), imageData = null) {
+    const addRecord = (type, content, timestamp = new Date().getTime(), imageData = null) => {
         records.push({ type, content, timestamp, imageData });
         saveAll();
         render();
-    }
+    };
 
-    function calculateDays(birthdate) {
-        const birth = new Date(birthdate);
-        const now = new Date();
-        const diff = now.getTime() - birth.getTime();
+    const calculateDays = (birthdate) => {
+        const diff = new Date().getTime() - new Date(birthdate).getTime();
         return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
-    }
+    };
 
-    function getTimeString(timestamp) {
-        return new Date(timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-    }
+    const getTimeString = (timestamp) => new Date(timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-    function getTimeAgo(timestamp) {
+    const getTimeAgo = (timestamp) => {
         if (!timestamp) return "기록 없음";
-        const diffMins = Math.floor((new Date().getTime() - timestamp) / 60000);
-        if (diffMins < 1) return "방금 전";
-        if (diffMins < 60) return `${diffMins}분 전`;
-        const diffHours = Math.floor(diffMins / 60);
-        if (diffHours < 24) return `${diffHours}시간 전`;
-        return `${Math.floor(diffHours / 24)}일 전`;
-    }
+        const mins = Math.floor((new Date().getTime() - timestamp) / 60000);
+        if (mins < 1) return "방금 전";
+        if (mins < 60) return `${mins}분 전`;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return `${hours}시간 전`;
+        return `${Math.floor(hours / 24)}일 전`;
+    };
 
     // --- Navigation ---
-    function switchView(viewName) {
-        Object.keys(views).forEach(key => {
-            if (views[key]) views[key].style.display = (key === viewName) ? 'block' : 'none';
-        });
-        navItems.forEach(item => {
-            item.classList.toggle('active', item.dataset.view === viewName);
-        });
+    const switchView = (viewName) => {
+        Object.keys(views).forEach(key => { if (views[key]) views[key].style.display = (key === viewName) ? 'block' : 'none'; });
+        navItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewName));
         currentView = viewName;
         render();
-    }
+    };
 
-    navItems.forEach(item => {
-        item.onclick = () => switchView(item.dataset.view);
-    });
+    navItems.forEach(item => item.onclick = () => switchView(item.dataset.view));
 
     // --- Render Logic ---
     function render() {
-        if (document.getElementById('home-baby-name')) {
-            document.getElementById('home-baby-name').innerText = profile.name;
-            document.getElementById('home-baby-days').innerText = `태어난 지 ${calculateDays(profile.birthdate)}일째`;
-            document.getElementById('daily-tip').innerText = `오늘의 팁: ${tips[new Date().getDate() % tips.length]}`;
-        }
+        const nameEl = document.getElementById('home-baby-name');
+        const daysEl = document.getElementById('home-baby-days');
+        if (nameEl) nameEl.innerText = profile.name;
+        if (daysEl) daysEl.innerText = `태어난 지 ${calculateDays(profile.birthdate)}일째`;
 
         if (currentView === 'home') renderHome();
         else if (currentView === 'graph') renderGraph();
@@ -102,109 +78,124 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (currentView === 'settings') renderSettings();
     }
 
+    const typeIcons = {
+        feed: 'fa-baby-bottle',
+        sleep: 'fa-moon',
+        diaper: 'fa-poop',
+        photo: 'fa-book-open',
+        health: 'fa-medkit',
+        bath: 'fa-bath'
+    };
+
     function renderHome() {
         const timeline = document.getElementById('timeline');
-        const sortedRecords = [...records].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
+        const sorted = [...records].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
         timeline.innerHTML = '';
-        sortedRecords.forEach(record => {
+        sorted.forEach(r => {
             const item = document.createElement('div');
-            item.className = `diary-item type-${record.type}`;
-
-            let imgHtml = record.imageData ? `<img src="${record.imageData}" class="timeline-img">` : '';
-
+            item.className = `diary-item type-${r.type}`;
+            const iconClass = typeIcons[r.type] || 'fa-check-circle';
             item.innerHTML = `
-                <span class="time">${getTimeString(record.timestamp)}</span>
+                <span class="time">${getTimeString(r.timestamp)}</span>
                 <div class="content">
-                    <div>${record.content}</div>
-                    ${imgHtml}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <i class="fas ${iconClass}" style="color:var(--primary-color); font-size:0.8rem"></i>
+                        <span>${r.content}</span>
+                    </div>
+                    ${r.imageData ? `<img src="${r.imageData}" class="timeline-img">` : ''}
                 </div>
             `;
             timeline.appendChild(item);
         });
 
-        ['feed', 'sleep', 'diaper', 'photo', 'health', 'bath'].forEach(type => {
+        Object.keys(typeIcons).forEach(type => {
             const card = document.getElementById(`btn-${type}`);
-            if (!card) return;
-            const statValue = card.querySelector('.stat-value');
-            if (type === 'photo') {
-                statValue.innerText = `${records.filter(r => r.type === 'photo').length}개의 일기`;
-            } else {
-                const last = records.filter(r => r.type === type).sort((a, b) => b.timestamp - a.timestamp)[0];
-                statValue.innerText = last ? getTimeAgo(last.timestamp) : '기록 없음';
+            if (card) {
+                const stat = card.querySelector('.stat-value');
+                if (type === 'photo') stat.innerText = `${records.filter(r => r.type === 'photo').length}개의 일기`;
+                else {
+                    const last = records.filter(r => r.type === type).sort((a, b) => b.timestamp - a.timestamp)[0];
+                    stat.innerText = last ? getTimeAgo(last.timestamp) : '기록 없음';
+                }
             }
         });
     }
 
-    // --- Graph & Calendar ---
     function renderGraph() {
         const ctx = document.getElementById('growthChart')?.getContext('2d');
         if (!ctx) return;
-        const sortedGrowth = [...growthData].sort((a, b) => a.timestamp - b.timestamp);
-        if (sortedGrowth.length > 0) {
-            const latest = sortedGrowth[sortedGrowth.length - 1];
-            document.getElementById('last-height').innerText = `${latest.height} cm`;
-            document.getElementById('last-weight').innerText = `${latest.weight} kg`;
+        const sorted = [...growthData].sort((a, b) => a.timestamp - b.timestamp);
+        if (sorted.length > 0) {
+            const last = sorted[sorted.length - 1];
+            document.getElementById('last-height').innerText = `${last.height} cm`;
+            document.getElementById('last-weight').innerText = `${last.weight} kg`;
         }
         if (chart) chart.destroy();
         chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: sortedGrowth.map(d => new Date(d.timestamp).toLocaleDateString()),
+                labels: sorted.map(d => new Date(d.timestamp).toLocaleDateString()),
                 datasets: [
-                    { label: '키 (cm)', data: sortedGrowth.map(d => d.height), borderColor: '#ff9a8b', tension: 0.3, yAxisID: 'y' },
-                    { label: '몸무게 (kg)', data: sortedGrowth.map(d => d.weight), borderColor: '#ff6b6b', tension: 0.3, yAxisID: 'y1' }
+                    { label: '키 (cm)', data: sorted.map(d => d.height), borderColor: '#ff9a8b', tension: 0.3, yAxisID: 'y' },
+                    { label: '몸무게 (kg)', data: sorted.map(d => d.weight), borderColor: '#ff6b6b', tension: 0.3, yAxisID: 'y1' }
                 ]
             }
         });
     }
 
-    let calendarDate = new Date();
+    let calDate = new Date();
     function renderCalendar() {
         const container = document.getElementById('calendar-container');
         if (!container) return;
-        const year = calendarDate.getFullYear();
-        const month = calendarDate.getMonth();
-        const firstDay = new Date(year, month, 1).getDay();
-        const lastDate = new Date(year, month + 1, 0).getDate();
-        let html = `<div class="calendar-header"><span id="cal-prev" style="cursor:pointer">&lt;</span><span>${year}년 ${month + 1}월</span><span id="cal-next" style="cursor:pointer">&gt;</span></div><div class="calendar-grid">`;
+        const y = calDate.getFullYear(), m = calDate.getMonth();
+        const first = new Date(y, m, 1).getDay(), last = new Date(y, m + 1, 0).getDate();
+        let html = `<div class="calendar-header"><span id="cal-prev">&lt;</span><span>${y}년 ${m + 1}월</span><span id="cal-next">&gt;</span></div><div class="calendar-grid">`;
         ['일', '월', '화', '수', '목', '금', '토'].forEach(d => html += `<div class="calendar-day-header">${d}</div>`);
-        for (let i = 0; i < firstDay; i++) html += '<div></div>';
-        for (let d = 1; d <= lastDate; d++) {
-            const hasRecord = records.some(r => new Date(r.timestamp).toLocaleDateString() === new Date(year, month, d).toLocaleDateString());
-            html += `<div class="calendar-day ${hasRecord ? 'has-record' : ''}" data-date="${year}-${month + 1}-${d}">${d}</div>`;
+        for (let i = 0; i < first; i++) html += '<div></div>';
+        for (let d = 1; d <= last; d++) {
+            const has = records.some(r => new Date(r.timestamp).toLocaleDateString() === new Date(y, m, d).toLocaleDateString());
+            html += `<div class="calendar-day ${has ? 'has-record' : ''}" data-date="${y}-${m + 1}-${d}">${d}</div>`;
         }
-        html += '</div>';
-        container.innerHTML = html;
-        document.getElementById('cal-prev').onclick = () => { calendarDate.setMonth(month - 1); renderCalendar(); };
-        document.getElementById('cal-next').onclick = () => { calendarDate.setMonth(month + 1); renderCalendar(); };
-        document.querySelectorAll('.calendar-day').forEach(el => el.onclick = () => showDayDetails(el.dataset.date));
+        container.innerHTML = html + '</div>';
+        document.getElementById('cal-prev').onclick = () => { calDate.setMonth(m - 1); renderCalendar(); };
+        document.getElementById('cal-next').onclick = () => { calDate.setMonth(m + 1); renderCalendar(); };
+        document.querySelectorAll('.calendar-day').forEach(el => el.onclick = () => showDay(el.dataset.date));
     }
 
-    function showDayDetails(dateStr) {
-        const dayTimeline = document.getElementById('day-timeline');
+    function showDay(dateStr) {
         const [y, m, d] = dateStr.split('-');
-        const targetDate = new Date(y, m - 1, d).toLocaleDateString();
-        const dayRecords = records.filter(r => new Date(r.timestamp).toLocaleDateString() === targetDate);
+        const target = new Date(y, m - 1, d).toLocaleDateString();
+        const dayRecs = records.filter(r => new Date(r.timestamp).toLocaleDateString() === target);
         document.getElementById('selected-date-label').innerText = `${y}년 ${m}월 ${d}일 기록`;
-        dayTimeline.innerHTML = dayRecords.length ? '' : '<p>기록이 없습니다.</p>';
-        dayRecords.forEach(r => {
+        const dayTimeline = document.getElementById('day-timeline');
+        dayTimeline.innerHTML = dayRecs.length ? '' : '<p>기록이 없습니다.</p>';
+        dayRecs.sort((a, b) => b.timestamp - a.timestamp).forEach(r => {
             const item = document.createElement('div');
             item.className = 'diary-item';
-            item.innerHTML = `<span class="time">${getTimeString(r.timestamp)}</span><div class="content">${r.content}</div>`;
+            item.innerHTML = `<span class="time">${getTimeString(r.timestamp)}</span><div class="content"><span>${r.content}</span></div>`;
             dayTimeline.appendChild(item);
         });
     }
 
-    // --- Modal Logic ---
+    function renderSettings() {
+        document.getElementById('set-profile').onclick = () => openModal('profile');
+        document.getElementById('set-export').onclick = () => {
+            const blob = new Blob([JSON.stringify({ records, growthData, profile })], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'eunu_diary.json'; a.click();
+        };
+        document.getElementById('set-reset').onclick = () => { if (confirm('모든 기록을 삭제하시겠습니까?')) { records = []; growthData = []; saveAll(); render(); } };
+    }
+
     function openModal(type) {
         modalOverlay.style.display = 'flex';
         let content = '';
-        let currentImageData = null;
+        let currentImg = null;
 
         switch (type) {
             case 'feed':
                 modalTitle.innerText = '식사 기록 🍼';
-                content = `<div class="form-group"><label>종류</label><select id="in-sub"><option value="식사">식사</option><option value="간식">간식</option></select></div><div class="form-group"><label>양 (ml/g)</label><input type="number" id="in-amt" value="120"></div>`;
+                content = `<div class="form-group"><label>종류</label><select id="in-sub"><option value="식사">식사</option><option value="간식">간식</option><option value="분유">분유</option><option value="모유">모유</option></select></div><div class="form-group"><label>양 (ml/g)</label><input type="number" id="in-amt" value="120"></div>`;
                 break;
             case 'sleep':
                 modalTitle.innerText = '수면 기록 💤';
@@ -220,104 +211,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'health':
                 modalTitle.innerText = '건강 기록 🏥';
-                content = `
-                    <div class="form-group"><label>체온 (℃)</label><input type="number" step="0.1" id="in-temp" placeholder="36.5"></div>
-                    <div class="form-group"><label>항목</label>
-                        <select id="in-sub">
-                            <option value="체온 측정">체온 측정</option>
-                            <option value="투약">투약 (약 먹임)</option>
-                            <option value="병원">병원 방문</option>
-                            <option value="기타">기타 건강사항</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>메모</label><input type="text" id="in-memo" placeholder="병원 이름이나 증상 등"></div>
-                `;
+                content = `<div class="form-group"><label>체온 (℃)</label><input type="number" step="0.1" id="in-temp" placeholder="36.5"></div><div class="form-group"><label>항목</label><select id="in-sub"><option value="체온 측정">체온 측정</option><option value="투약">투약</option><option value="병원">병원 방문</option><option value="기타">기타</option></select></div><div class="form-group"><label>메모</label><input type="text" id="in-memo"></div>`;
                 break;
             case 'photo':
                 modalTitle.innerText = '하루일기 쓰기 ✍️';
-                content = `
-                    <div class="img-preview-container" id="img-preview-box">
-                        <div class="img-preview-box-inner">
-                            <i class="fas fa-camera"></i>
-                            <span>사진을 선택하세요 (또는 촬영)</span>
-                        </div>
-                        <input type="file" id="in-file" accept="image/*" capture="environment" style="display:none">
-                    </div>
-                    <div class="form-group">
-                        <label>오늘의 일기</label>
-                        <textarea id="in-desc" style="width:100%; height:100px; border:1px solid #eee; border-radius:12px; padding:10px; outline:none; font-size:0.9rem" placeholder="오늘 은우는 어땠나요? 소중한 순간을 기록해 보세요."></textarea>
-                    </div>
-                `;
+                content = `<div class="img-preview-container" id="img-box"><div class="img-preview-box-inner"><i class="fas fa-camera"></i><span>사진 선택/촬영</span></div><input type="file" id="in-file" accept="image/*" capture="environment" style="display:none"></div><div class="form-group"><textarea id="in-desc" style="width:100%; height:100px; border-radius:12px; border:1px solid #eee; padding:10px;" placeholder="오늘의 추억"></textarea></div>`;
                 break;
             case 'growth':
                 modalTitle.innerText = '성장 기록 📈';
                 content = `<div class="form-group"><label>키 (cm)</label><input type="number" step="0.1" id="in-h"></div><div class="form-group"><label>몸무게 (kg)</label><input type="number" step="0.1" id="in-w"></div>`;
                 break;
             case 'profile':
-                modalTitle.innerText = '아이 정보 수정 ✏️';
+                modalTitle.innerText = '프로필 수정 ✏️';
                 content = `<div class="form-group"><label>이름</label><input type="text" id="in-name" value="${profile.name}"></div><div class="form-group"><label>생일</label><input type="date" id="in-birth" value="${profile.birthdate}"></div>`;
                 break;
         }
 
         modalBody.innerHTML = content + `<button class="submit-btn" id="save-btn">저장하기</button>`;
 
-        // Special logic for Photo Upload (Daily Diary)
         if (type === 'photo') {
-            const previewBox = document.getElementById('img-preview-box');
-            const fileIn = document.getElementById('in-file');
-            previewBox.onclick = () => fileIn.click();
-            fileIn.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (re) => {
-                        currentImageData = re.target.result;
-                        previewBox.innerHTML = `<img src="${currentImageData}">`;
-                        previewBox.classList.add('has-image');
-                    };
-                    reader.readAsDataURL(file);
+            const box = document.getElementById('img-box'), fin = document.getElementById('in-file');
+            box.onclick = () => fin.click();
+            fin.onchange = (e) => {
+                const f = e.target.files[0];
+                if (f) {
+                    const r = new FileReader(); r.onload = (re) => { currentImg = re.target.result; box.innerHTML = `<img src="${currentImg}">`; }; r.readAsDataURL(f);
                 }
             };
         }
 
         document.getElementById('save-btn').onclick = () => {
-            if (type === 'feed') addRecord('feed', `🍼 ${document.getElementById('in-sub').value} ${document.getElementById('in-amt').value}ml 완료`);
-            else if (type === 'sleep') addRecord('sleep', `💤 수면: ${document.getElementById('in-sub').value}`);
-            else if (type === 'diaper') addRecord('diaper', `🧷 기저귀: ${document.getElementById('in-sub').value}`);
-            else if (type === 'bath') addRecord('bath', `🛁 목욕: ${document.getElementById('in-sub').value}`);
+            if (type === 'feed') addRecord('feed', `${document.getElementById('in-sub').value} ${document.getElementById('in-amt').value}ml 완료`);
+            else if (type === 'sleep') addRecord('sleep', `수면: ${document.getElementById('in-sub').value}`);
+            else if (type === 'diaper') addRecord('diaper', `기저귀: ${document.getElementById('in-sub').value}`);
+            else if (type === 'bath') addRecord('bath', `목욕: ${document.getElementById('in-sub').value}`);
             else if (type === 'health') {
-                const temp = document.getElementById('in-temp').value;
-                const sub = document.getElementById('in-sub').value;
-                const memo = document.getElementById('in-memo').value;
-                addRecord('health', `🏥 [${sub}] ${temp ? temp + '℃' : ''} ${memo}`);
+                const t = document.getElementById('in-temp').value, s = document.getElementById('in-sub').value, m = document.getElementById('in-memo').value;
+                addRecord('health', `[${s}] ${t ? t + '℃' : ''} ${m}`);
             }
-            else if (type === 'photo') {
-                const desc = document.getElementById('in-desc').value;
-                if (!desc && !currentImageData) {
-                    alert('내용이나 사진을 입력해주세요!');
-                    return;
-                }
-                addRecord('photo', `${desc || '오늘의 일기'}`, new Date().getTime(), currentImageData);
-            }
-            else if (type === 'growth') {
-                growthData.push({ height: document.getElementById('in-h').value, weight: document.getElementById('in-w').value, timestamp: new Date().getTime() });
-                saveAll(); renderGraph();
-            }
-            else if (type === 'profile') {
-                profile.name = document.getElementById('in-name').value;
-                profile.birthdate = document.getElementById('in-birth').value;
-                saveAll(); render();
-            }
+            else if (type === 'photo') addRecord('photo', document.getElementById('in-desc').value || '오늘의 일기', new Date().getTime(), currentImg);
+            else if (type === 'growth') { growthData.push({ height: document.getElementById('in-h').value, weight: document.getElementById('in-w').value, timestamp: new Date().getTime() }); saveAll(); renderGraph(); }
+            else if (type === 'profile') { profile.name = document.getElementById('in-name').value; profile.birthdate = document.getElementById('in-birth').value; saveAll(); render(); }
             closeModal();
         };
     }
 
-    function closeModal() { modalOverlay.style.display = 'none'; }
+    const closeModal = () => modalOverlay.style.display = 'none';
     closeBtn.onclick = closeModal;
     modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
 
-    // --- Init ---
-    ['feed', 'sleep', 'diaper', 'photo', 'health', 'bath'].forEach(id => {
+    // --- Init All Buttons ---
+    Object.keys(typeIcons).forEach(id => {
         const btn = document.getElementById(`btn-${id}`);
         if (btn) btn.onclick = () => openModal(id);
     });
@@ -325,26 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addGrowth) addGrowth.onclick = () => openModal('growth');
     const plusBtn = document.querySelector('.add-btn');
     if (plusBtn) plusBtn.onclick = () => openModal('feed');
-
-    function renderSettings() {
-        const pBtn = document.getElementById('set-profile');
-        if (pBtn) pBtn.onclick = () => openModal('profile');
-
-        const eBtn = document.getElementById('set-export');
-        if (eBtn) eBtn.onclick = () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ records, growthData, profile }));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "baby_diary_backup.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click(); downloadAnchorNode.remove();
-        };
-
-        const rBtn = document.getElementById('set-reset');
-        if (rBtn) rBtn.onclick = () => {
-            if (confirm('정말로 모든 기록을 삭제하시겠습니까?')) { records = []; growthData = []; saveAll(); render(); }
-        };
-    }
 
     switchView('home');
 });
