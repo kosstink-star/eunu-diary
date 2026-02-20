@@ -8,7 +8,7 @@
     --text-sub: #a68b8f;
     --border: #ffebee;
     --accent-glow: rgba(255, 143, 163, 0.22);
-    --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 34px);
 }
 
 * {
@@ -29,6 +29,8 @@ body {
     width: 100%;
     max-width: 450px;
     height: 100vh;
+    height: 100dvh;
+    /* Dynamic viewport height for Safari */
     margin: 0 auto;
     background: var(--bg-main);
     display: flex;
@@ -686,13 +688,14 @@ header {
 }
 
 nav {
-    height: 85px;
+    height: calc(85px + var(--safe-area-bottom));
     background: #fff;
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: flex-start;
     border-top: 1px solid var(--border);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: 15px;
+    padding-bottom: var(--safe-area-bottom);
 }
 
 .nav-item {
