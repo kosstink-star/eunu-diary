@@ -188,7 +188,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffEl = document.getElementById('v-sleep-diff');
             if (sEl) sEl.innerText = getTimeStr(sleepStart.getTime());
             if (eEl) eEl.innerText = getTimeStr(sleepEnd.getTime());
-            const dm = Math.floor((sleepEnd - sleepStart) / 60000);
+            let diffMs = sleepEnd - sleepStart;
+            if (diffMs < 0) diffMs += 86400000; // Next day fix
+            const dm = Math.floor(diffMs / 60000);
             if (diffEl) diffEl.innerText = `${Math.floor(dm / 60)}시간 ${dm % 60}분`;
         };
 
@@ -329,7 +331,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: document.getElementById('v-nt')?.value || "", imageData: selImg };
             if (type === 'feed') res.description = `${valAmount}g`;
             else if (type === 'health') res.description = selTitle === '투약' ? `${valAmount}ml` : `${valAmount}.${valDecimal}°C`;
-            else if (type === 'sleep') { const dm = Math.floor((sleepEnd - sleepStart) / 60000); res.description = `${Math.floor(dm / 60)}시간 ${dm % 60}분`; res.dm = dm; res.timestamp = sleepEnd.getTime(); }
+            else if (type === 'sleep') {
+                let diffMs = sleepEnd - sleepStart;
+                if (diffMs < 0) diffMs += 86400000;
+                const dm = Math.floor(diffMs / 60000);
+                res.description = `${Math.floor(dm / 60)}시간 ${dm % 60}분`;
+                res.dm = dm;
+                res.timestamp = sleepEnd.getTime();
+            }
             else if (type === 'diaper') res.description = '기저귀 교체';
             else res.description = '기록 완료';
 
