@@ -1,10 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('우리은우 성장일기 v13.4 (Universal Wheel & Header Fix) 로드 완료');
+    console.log('우리은우 성장일기 v14.0 (Real-time Family Sync) 로드 완료');
+
+    // --- Firebase Configuration (Public Sandbox for Demo) ---
+    // Note: In a real app, these should be hidden/secured.
+    const firebaseConfig = {
+        databaseURL: "https://eunu-diary-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let familyId = localStorage.getItem('familyId') || null;
+    let syncEnabled = !!familyId;
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
     let growthData = JSON.parse(localStorage.getItem('babyGrowth')) || [];
-    let profile = JSON.parse(localStorage.getItem('babyProfile')) || { name: '우리은우', birthdate: '2026-02-15' };
+    let profile = JSON.parse(localStorage.getItem('babyProfile')) || {
+        name: '우리은우',
+        birthdate: '2026-02-15',
+        birthTime: '10:30',
+        bloodType: 'A형',
+        birthWeight: '3.2',
+        birthHeight: '50'
+    };
     let currentView = 'home', chart = null, selectedDate = new Date();
 
     const selectors = {
@@ -21,11 +38,43 @@ document.addEventListener('DOMContentLoaded', () => {
         backBtn: document.getElementById('header-back-btn')
     };
 
-    const saveAll = () => {
+    const saveAll = (syncToCloud = true) => {
         localStorage.setItem('babyRecords', JSON.stringify(records));
         localStorage.setItem('babyGrowth', JSON.stringify(growthData));
         localStorage.setItem('babyProfile', JSON.stringify(profile));
+
+        if (syncEnabled && familyId && syncToCloud) {
+            db.ref(`families/${familyId}`).set({
+                records,
+                growthData,
+                profile,
+                lastUpdated: Date.now()
+            });
+        }
     };
+
+    const setupSync = (fid) => {
+        if (!fid) return;
+        familyId = fid;
+        localStorage.setItem('familyId', fid);
+        syncEnabled = true;
+
+        db.ref(`families/${fid}`).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                records = data.records || [];
+                growthData = data.growthData || [];
+                profile = data.profile || profile;
+                saveAll(false); // Update local only
+                render();
+                updateHeader();
+                const status = document.getElementById('sync-status');
+                if (status) status.innerText = `가족 ID: ${fid} (동기화 중)`;
+            }
+        });
+    };
+
+    if (syncEnabled) setupSync(familyId);
 
     const getTimeStr = (ts) => new Date(ts).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
     const getFullDtStr = (ts) => {
@@ -371,10 +420,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.sd = (y, m, d) => { selectedDate = new Date(y, m, d); switchView('home'); };
     function renderSettings() {
+        const sTime = document.getElementById('sum-time');
+        const sBlood = document.getElementById('sum-blood');
+        const sWeight = document.getElementById('sum-weight');
+        const sHeight = document.getElementById('sum-height');
+
+        if (sTime) sTime.innerText = profile.birthTime || '-';
+        if (sBlood) sBlood.innerText = profile.bloodType || '-';
+        if (sWeight) sWeight.innerText = profile.birthWeight ? `${profile.birthWeight}kg` : '-';
+        if (sHeight) sHeight.innerText = profile.birthHeight ? `${profile.birthHeight}cm` : '-';
+
+        document.getElementById('set-sync').onclick = () => {
+            const fid = prompt('가족 공유 ID를 입력해 주세요. (같은 ID를 쓰면 데이터가 공유됩니다)', familyId || '');
+            if (fid) setupSync(fid);
+        };
+
         document.getElementById('set-profile').onclick = () => {
             const n = prompt('아이 이름을 입력해주세요', profile.name);
             const b = prompt('태어난 날짜를 입력해주세요 (예: 2026-02-15)', profile.birthdate);
-            if (n) profile.name = n; if (b) profile.birthdate = b; saveAll(); updateHeader(); render();
+            const t = prompt('태어난 시간을 입력해주세요 (예: 14:30)', profile.birthTime || '00:00');
+            const bt = prompt('혈액형을 입력해주세요 (예: A형, B형...)', profile.bloodType || '알 수 없음');
+            const bw = prompt('태어날 때 몸무게(kg)를 입력해주세요', profile.birthWeight || '');
+            const bh = prompt('태어날 때 키(cm)를 입력해주세요', profile.birthHeight || '');
+
+            if (n !== null) profile.name = n;
+            if (b !== null) profile.birthdate = b;
+            if (t !== null) profile.birthTime = t;
+            if (bt !== null) profile.bloodType = bt;
+            if (bw !== null) profile.birthWeight = bw;
+            if (bh !== null) profile.birthHeight = bh;
+
+            saveAll(); updateHeader(); render();
         };
         document.getElementById('set-backup').onclick = () => {
             const data = { records, growthData, profile, exportDate: new Date().toISOString() };
@@ -392,7 +468,45 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('set-reset').onclick = () => { if (confirm('모든 데이터를 삭제할까요? 되돌릴 수 없습니다.')) { records = []; growthData = []; saveAll(); render(); updateHeader(); } };
     }
 
+    // --- Growth Modal Logic ---
+    window.openGrowthModal = () => {
+        selectors.modalOverlay.style.display = 'flex';
+        let hVal = 50, wVal = 3.5;
+        const html = `<div class="modal-header-row"><h3>성장 기록 추가</h3><i class="fas fa-times close-icon" onclick="window.closeModal()"></i></div>
+        <div class="trigger-box" id="v-height-trigger"><span>현재 키</span><strong id="v-height-main">50.0<small>cm</small></strong></div>
+        <div class="trigger-box" id="v-weight-trigger"><span>현재 몸무게</span><strong id="v-weight-main">3.50<small>kg</small></strong></div>
+        <div class="modal-footer"><button class="btn btn-save" id="save-growth">성장 기록 저장</button></div>`;
+        selectors.modalBody.innerHTML = html;
+
+        const updateGDisp = () => {
+            document.getElementById('v-height-main').innerHTML = `${hVal.toFixed(1)}<small>cm</small>`;
+            document.getElementById('v-weight-main').innerHTML = `${wVal.toFixed(2)}<small>kg</small>`;
+        };
+
+        document.getElementById('v-height-trigger').onclick = () => openUniversalPicker({
+            wheels: [
+                { min: 30, max: 120, init: Math.floor(hVal) },
+                { min: 0, max: 9, init: Math.round((hVal % 1) * 10), format: (v) => `.${v}` }
+            ], separator: ''
+        }, (res) => { hVal = res[0] + (res[1] / 10); updateGDisp(); });
+
+        document.getElementById('v-weight-trigger').onclick = () => openUniversalPicker({
+            wheels: [
+                { min: 2, max: 30, init: Math.floor(wVal) },
+                { min: 0, max: 95, step: 5, init: Math.round((wVal % 1) * 100), format: (v) => `.${String(v).padStart(2, '0')}` }
+            ], separator: ''
+        }, (res) => { wVal = res[0] + (res[1] / 100); updateGDisp(); });
+
+        document.getElementById('save-growth').onclick = () => {
+            growthData.push({ timestamp: new Date().getTime(), height: hVal, weight: wVal });
+            saveAll(); render(); window.closeModal();
+        };
+    };
+
     ['feed', 'diaper', 'sleep', 'bath', 'health', 'photo'].forEach(t => { const b = document.getElementById(`btn-${t}`); if (b) b.onclick = () => window.openModal(t); });
     document.getElementById('global-add-btn').onclick = () => window.openModal('quick');
+    const growthBtn = document.getElementById('btn-add-growth');
+    if (growthBtn) growthBtn.onclick = () => window.openGrowthModal();
+
     switchView('home');
 });
