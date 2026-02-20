@@ -18,7 +18,7 @@
         <header>
             <div class="header-left">
                 <i class="fas fa-arrow-left back-btn" id="header-back-btn" style="display:none;"></i>
-                <div class="name-info">
+                <div class="title-row">
                     <h1>우리은우 육아 기록</h1>
                     <span class="d-day-badge" id="d-day-text">D+??</span>
                 </div>
@@ -109,7 +109,7 @@
                             class="fas fa-user-edit"></i></div>
                     <div class="setting-info">
                         <strong>프로필 수정</strong>
-                        <span>아이 이름과 생일을 변경합니다.</span>
+                        <span>우리 아기 이름과 생일을 관리해요.</span>
                     </div>
                     <i class="fas fa-chevron-right"></i>
                 </div>
@@ -117,8 +117,8 @@
                     <div class="setting-icon" style="background:#ffebee; color:#e53935;"><i
                             class="fas fa-trash-alt"></i></div>
                     <div class="setting-info">
-                        <strong>데이터 초기화</strong>
-                        <span>모든 기록을 영구적으로 삭제합니다.</span>
+                        <strong>전체 초기화</strong>
+                        <span>모든 기록을 삭제합니다. (복구 불가)</span>
                     </div>
                     <i class="fas fa-chevron-right"></i>
                 </div>
@@ -127,12 +127,12 @@
 
         <nav>
             <div class="nav-item active" data-view="home">
-                <i class="fas fa-home"></i>
+                <i class="fas fa-house"></i>
                 <span>홈</span>
             </div>
             <div class="nav-item" data-view="graph">
                 <i class="fas fa-chart-line"></i>
-                <span>통계</span>
+                <span>평균</span>
             </div>
             <div class="nav-item" data-view="calendar">
                 <i class="fas fa-calendar-alt"></i>
@@ -151,36 +151,39 @@
             </div>
         </div>
 
-        <div class="context-menu-overlay" id="context-menu-overlay">
-            <div class="context-menu">
-                <div class="context-menu-item" id="ctx-edit">
-                    <span>수정하기</span>
-                    <i class="fas fa-edit"></i>
-                </div>
-                <div class="context-menu-item delete" id="ctx-delete">
-                    <span>삭제하기</span>
-                    <i class="fas fa-trash-alt"></i>
-                </div>
-            </div>
-        </div>
-
+        <!-- Custom Time Picker Overlay -->
         <div class="dt-picker-overlay" id="dt-picker-overlay">
             <div class="dt-picker-container">
                 <div class="dt-picker-header">
                     <button id="dt-cancel">취소</button>
                     <button id="dt-done">선택완료</button>
                 </div>
-                <div class="native-inputs wheel-mode">
-                    <div class="wheel-col" id="wheel-h">
-                        <div class="wheel-scroller" id="scroller-h"></div>
-                    </div>
-                    <span class="wheel-separator">:</span>
-                    <div class="wheel-col" id="wheel-m">
-                        <div class="wheel-scroller" id="scroller-m"></div>
+                <div class="wheel-picker-body">
+                    <div class="wheel-mode">
+                        <div class="wheel-col" id="wheel-h">
+                            <div class="wheel-scroller" id="scroller-h"></div>
+                        </div>
+                        <span class="wheel-separator">:</span>
+                        <div class="wheel-col" id="wheel-m">
+                            <div class="wheel-scroller" id="scroller-m"></div>
+                        </div>
                     </div>
                 </div>
                 <input type="hidden" id="dt-h" value="0">
                 <input type="hidden" id="dt-m" value="0">
+            </div>
+        </div>
+
+        <div class="context-menu-overlay" id="context-menu-overlay">
+            <div class="context-menu">
+                <div class="context-menu-item" id="ctx-edit">
+                    <span>기록 수정하기</span>
+                    <i class="fas fa-edit"></i>
+                </div>
+                <div class="context-menu-item delete" id="ctx-delete">
+                    <span>기록 삭제하기</span>
+                    <i class="fas fa-trash-alt"></i>
+                </div>
             </div>
         </div>
     </div>
