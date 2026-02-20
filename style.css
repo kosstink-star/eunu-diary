@@ -37,7 +37,7 @@ body {
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.08);
 }
 
-/* Header & D-Day Alignment (Image 1 Fix) */
+/* Header & D-Day Alignment */
 header {
     height: 80px;
     padding: 0 25px;
@@ -264,39 +264,49 @@ header {
     justify-content: space-between;
 }
 
-.type-feed .item-dot {
-    background: #ffa000;
-}
-
-.type-sleep .item-dot {
-    background: #00acc1;
-}
-
-.type-diaper .item-dot {
-    background: #8d6e63;
-}
-
-.type-bath .item-dot {
-    background: #afb42b;
-}
-
-.type-health .item-dot {
-    background: #0288d1;
-}
-
 .item-main h4 {
     font-size: 1.05rem;
     font-weight: 900;
     margin-bottom: 6px;
 }
 
-.item-sub {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #555;
+/* Quick Add Modal (Refining for "Big Icons") */
+.quick-add-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px 20px;
+    padding: 30px 10px 40px;
+    text-align: center;
 }
 
-/* Modals & Overlays (Image 2 Fix) */
+.quick-add-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.quick-add-item .circle {
+    width: 75px;
+    height: 75px;
+    border-radius: 26px;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.22rem;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f8f8f8;
+}
+
+.quick-add-item label {
+    font-size: 0.9rem;
+    font-weight: 850;
+    color: #333;
+}
+
+/* Modals */
 .modal-overlay,
 .dt-picker-overlay {
     position: absolute;
@@ -304,8 +314,8 @@ header {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
     display: none;
     justify-content: center;
     align-items: flex-end;
@@ -316,53 +326,129 @@ header {
 .dt-picker-container {
     background: #fff;
     width: 100%;
-    border-radius: 35px 35px 0 0;
-    padding: 35px 25px calc(25px + var(--safe-area-bottom));
-    animation: modalSlideUp 0.35s cubic-bezier(0.19, 1, 0.22, 1);
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+    border-radius: 40px 40px 0 0;
+    padding: 40px 25px calc(30px + var(--safe-area-bottom));
+    animation: modalSlideUp 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 @keyframes modalSlideUp {
     from {
         transform: translateY(100%);
-        opacity: 0;
     }
 
     to {
         transform: translateY(0);
-        opacity: 1;
     }
 }
 
-.dt-picker-header {
+/* Selection Grid (In record modals) */
+.selection-grid {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    gap: 10px;
+}
+
+.selection-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    opacity: 0.35;
+}
+
+.selection-item.active {
+    opacity: 1;
+}
+
+.selection-item .circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.6rem;
+}
+
+.selection-item label {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #555;
+}
+
+/* Amounts & Note */
+.amount-box {
+    background: #fcfcfc;
+    border: 1px solid #f0f0f0;
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.amount-box strong {
+    font-size: 2.2rem;
+    font-weight: 900;
+}
+
+.note-container {
+    background: #f9f9f9;
+    border-radius: 20px;
+    padding: 20px;
+    min-height: 120px;
+    border: 1px solid #f0f0f0;
     margin-bottom: 25px;
 }
 
-.dt-picker-header button {
-    background: none;
+.note-container textarea {
+    width: 100%;
     border: none;
-    font-size: 1.15rem;
-    font-weight: 850;
-    color: #007aff;
-    cursor: pointer;
-    padding: 10px;
+    background: transparent;
+    resize: none;
+    font-size: 1rem;
+    outline: none;
 }
 
-#dt-cancel {
+/* Buttons */
+.modal-footer {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    flex: 1;
+    padding: 18px;
+    border-radius: 20px;
+    font-weight: 850;
+    font-size: 1.05rem;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-save {
+    background: var(--primary-gradient);
+    color: #fff;
+    box-shadow: 0 10px 20px var(--accent-glow);
+}
+
+.btn-cancel {
+    background: #f5f5f5;
     color: #888;
 }
 
-/* Wheel Style Implementation Fix */
+/* Wheel Style */
 .wheel-mode {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 200px;
+    height: 180px;
     overflow: hidden;
     position: relative;
-    background: #fbfbfc;
+    background: #fdfdfd;
     border-radius: 24px;
     mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
     -webkit-mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
@@ -381,7 +467,7 @@ header {
 }
 
 .wheel-scroller {
-    padding: 80px 0;
+    padding: 70px 0;
 }
 
 .wheel-item {
@@ -405,31 +491,6 @@ header {
     font-size: 1.8rem;
     font-weight: 900;
     color: #111;
-    padding: 0 15px;
-}
-
-/* Global Floating Action Button */
-.add-btn {
-    position: absolute;
-    bottom: 105px;
-    right: 25px;
-    width: 72px;
-    height: 72px;
-    border-radius: 26px;
-    background: var(--primary-gradient);
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2.4rem;
-    border: none;
-    z-index: 2000;
-    box-shadow: 0 16px 36px rgba(255, 106, 136, 0.4);
-    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.add-btn:active {
-    transform: scale(0.9) rotate(45deg);
 }
 
 /* Navigation */
@@ -451,13 +512,30 @@ nav {
     color: #ddd;
     font-weight: 800;
     font-size: 0.65rem;
-    transition: 0.2s;
-}
-
-.nav-item i {
-    font-size: 1.6rem;
 }
 
 .nav-item.active {
     color: #ff6a88;
+}
+
+.add-btn {
+    position: absolute;
+    bottom: 105px;
+    right: 25px;
+    width: 72px;
+    height: 72px;
+    border-radius: 26px;
+    background: var(--primary-gradient);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.4rem;
+    border: none;
+    z-index: 2000;
+    box-shadow: 0 16px 36px rgba(255, 106, 136, 0.4);
+}
+
+.add-btn:active {
+    transform: scale(0.9) rotate(45deg);
 }
