@@ -1,0 +1,21 @@
+{
+    "name": "우리아이 성장일기",
+    "short_name": "육아일기",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#fcf8f5",
+    "theme_color": "#ff9a8b",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
