@@ -141,33 +141,23 @@
             </div>
         </nav>
 
-        <!-- Modals -->
+        <!-- General Modal -->
         <div class="modal-overlay" id="modal-overlay">
             <div class="modal">
                 <div id="modal-body"></div>
             </div>
         </div>
 
-        <!-- Custom Time Picker Overlay -->
+        <!-- Universal Picker (Used for Time, Amount, Temperature) -->
         <div class="dt-picker-overlay" id="dt-picker-overlay">
             <div class="dt-picker-container">
                 <div class="dt-picker-header">
                     <button id="dt-cancel">취소</button>
                     <button id="dt-done">선택완료</button>
                 </div>
-                <div class="wheel-picker-body">
-                    <div class="wheel-mode">
-                        <div class="wheel-col" id="wheel-h">
-                            <div class="wheel-scroller" id="scroller-h"></div>
-                        </div>
-                        <span class="wheel-separator">:</span>
-                        <div class="wheel-col" id="wheel-m">
-                            <div class="wheel-scroller" id="scroller-m"></div>
-                        </div>
-                    </div>
+                <div class="wheel-picker-body" id="wheel-container">
+                    <!-- Wheels injected here dynamically -->
                 </div>
-                <input type="hidden" id="dt-h" value="0">
-                <input type="hidden" id="dt-m" value="0">
             </div>
         </div>
     </div>
