@@ -53,7 +53,7 @@ header {
 header .header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
 }
 
 header .name-info {
@@ -61,15 +61,35 @@ header .name-info {
     flex-direction: column;
 }
 
+header h1 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.5px;
+}
+
 header .d-day-badge {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    background: #fff0ed;
-    padding: 2px 8px;
-    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: white;
+    background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 100%);
+    padding: 3px 10px;
+    border-radius: 20px;
     width: fit-content;
-    margin-top: 2px;
+    margin-top: 3px;
+    box-shadow: 0 4px 10px rgba(255, 106, 136, 0.2);
+}
+
+header .right-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8f8f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    color: #ccc;
 }
 
 header .back-btn {
@@ -633,19 +653,56 @@ nav {
 .add-btn {
     position: absolute;
     bottom: 100px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border-radius: 30px;
-    background: var(--primary-color);
+    right: 25px;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff9a8b 0%, #ff6a88 100%);
     color: white;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.6rem;
-    box-shadow: 0 10px 25px rgba(255, 154, 139, 0.4);
+    font-size: 1.8rem;
+    box-shadow: 0 12px 30px rgba(255, 106, 136, 0.4);
     border: none;
-    z-index: 9;
+    z-index: 99;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.add-btn:active {
+    transform: scale(0.9) rotate(90deg);
+}
+
+/* Quick Add Modal Special Styles */
+.quick-add-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.quick-add-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.quick-add-item .circle {
+    width: 75px;
+    height: 75px;
+    border-radius: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+}
+
+.quick-add-item label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #555;
 }
 
 /* Wheel Mode Styling */

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('우리은우 성장일기 v11.0 (Sleep Wheel Picker & UI Refine) 로드 완료');
+    console.log('우리은우 성장일기 v12.0 (Premium Header & Multi-Add) 로드 완료');
 
     // --- State & Storage ---
     let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
@@ -187,8 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const curDt = rec ? new Date(rec.timestamp) : new Date(selectedDate);
         if (!rec) { const n = new Date(); curDt.setHours(n.getHours()); curDt.setMinutes(n.getMinutes()); }
 
-        // Start/End Time States for Sleep
-        let sleepStart = new Date(curDt.getTime() - (60 * 60 * 1000)); // Default 1 hour before
+        let sleepStart = new Date(curDt.getTime() - (60 * 60 * 1000));
         let sleepEnd = new Date(curDt.getTime());
 
         const refreshDt = () => {
@@ -202,15 +201,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const eEl = document.getElementById('sleep-end-disp');
             if (sEl) sEl.innerText = getTimeStr(sleepStart.getTime());
             if (eEl) eEl.innerText = getTimeStr(sleepEnd.getTime());
-
             const diff = Math.floor((sleepEnd - sleepStart) / (60 * 1000));
             const diffEl = document.getElementById('v-sleep-diff');
             if (diffEl) diffEl.innerText = `${Math.floor(diff / 60)}시간 ${diff % 60}분`;
         };
 
-        const top = `<div class="modal-header-row"><h3>${type === 'feed' ? '식사' : type === 'diaper' ? '배변' : type === 'sleep' ? '수면' : type === 'bath' ? '목욕' : type === 'health' ? '건강' : '일기'} 기록</h3>${rid ? `<i class="fas fa-trash-alt delete-icon" onclick="window.delMod('${rid}')"></i>` : `<i class="fas fa-times delete-icon" onclick="closeModal()"></i>`}</div><div class="modal-date-picker" id="modal-dt-disp"></div>`;
+        const top = `<div class="modal-header-row"><h3>${type === 'feed' ? '식사' : type === 'diaper' ? '배변' : type === 'sleep' ? '수면' : type === 'bath' ? '목욕' : type === 'health' ? '건강' : type === 'photo' ? '일기' : '추가하기'}</h3>${rid ? `<i class="fas fa-trash-alt delete-icon" onclick="window.delMod('${rid}')"></i>` : `<i class="fas fa-times delete-icon" onclick="closeModal()"></i>`}</div><div class="modal-date-picker" id="modal-dt-disp" ${type === 'quick' ? 'style="display:none"' : ''}></div>`;
 
         switch (type) {
+            case 'quick':
+                html = `${top}<div class="quick-add-grid">
+                    <div class="quick-add-item" onclick="openModal('feed')"><div class="circle" style="background:#fff8e1; color:#ffa000;"><i class="fas fa-utensils"></i></div><label>식사</label></div>
+                    <div class="quick-add-item" onclick="openModal('diaper')"><div class="circle" style="background:#efebe9; color:#8d6e63;"><i class="fas fa-baby"></i></div><label>배변</label></div>
+                    <div class="quick-add-item" onclick="openModal('sleep')"><div class="circle" style="background:#e0f7fa; color:#00acc1;"><i class="fas fa-moon"></i></div><label>수면</label></div>
+                    <div class="quick-add-item" onclick="openModal('bath')"><div class="circle" style="background:#f9fbe7; color:#afb42b;"><i class="fas fa-bath"></i></div><label>목욕</label></div>
+                    <div class="quick-add-item" onclick="openModal('health')"><div class="circle" style="background:#e1f5fe; color:#0288d1;"><i class="fas fa-notes-medical"></i></div><label>건강</label></div>
+                    <div class="quick-add-item" onclick="openModal('photo')"><div class="circle" style="background:#f3e5f5; color:#8e24aa;"><i class="fas fa-book"></i></div><label>일기</label></div>
+                </div>`;
+                selectors.modalBody.innerHTML = html;
+                return; // Early return for quick add
             case 'feed':
                 selTitle = rec ? rec.title : '이유식';
                 html = `${top}<div class="selection-grid">
@@ -242,18 +251,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 html = `${top}
                 <div class="centered-icon-box" style="margin:20px 0 30px 0;">
-                    <div class="circle" style="width:100px; height:100px; border-radius:50%; background:#e0f7fa; color:#00acc1; display:flex; justify-content:center; align-items:center; font-size:3rem; border:3px solid #b2ebf2; box-shadow:0 10px 20px rgba(0,172,193,0.15);">
+                    <div class="circle" style="width:100px; height:100px; border-radius:35px; background:#e0f7fa; color:#00acc1; display:flex; justify-content:center; align-items:center; font-size:3rem; border:3px solid #b2ebf2; box-shadow:0 12px 25px rgba(0,172,193,0.15);">
                         <i class="fas fa-moon"></i>
                     </div>
                 </div>
-                <div class="amount-box">총 수면시간 <strong id="v-sleep-diff">?시간 ?분</strong></div>
+                <div class="amount-box" style="background:#f0fafe; border:1px solid #e1f5fe;">총 수면시간 <strong id="v-sleep-diff" style="color:#00acc1;">?시간 ?분</strong></div>
                 <div class="time-picker-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
-                    <div class="time-picker-box" id="sleep-start-trigger" style="background:#f9f9f9; padding:20px; border-radius:15px; text-align:center; cursor:pointer; border:1px solid #eee;">
-                        <span style="font-size:0.85rem; color:#888; font-weight:700;">시작</span>
+                    <div class="time-picker-box" id="sleep-start-trigger" style="background:#fff; padding:20px; border-radius:15px; text-align:center; cursor:pointer; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
+                        <span style="font-size:0.85rem; color:#888; font-weight:700;">시작 시간</span>
                         <div style="font-size:1.6rem; font-weight:800; margin-top:8px; color:#333;" id="sleep-start-disp">${getTimeStr(sleepStart.getTime())}</div>
                     </div>
-                    <div class="time-picker-box" id="sleep-end-trigger" style="background:#f9f9f9; padding:20px; border-radius:15px; text-align:center; cursor:pointer; border:1px solid #eee;">
-                        <span style="font-size:0.85rem; color:#888; font-weight:700;">종료</span>
+                    <div class="time-picker-box" id="sleep-end-trigger" style="background:#fff; padding:20px; border-radius:15px; text-align:center; cursor:pointer; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
+                        <span style="font-size:0.85rem; color:#888; font-weight:700;">종료 시간</span>
                         <div style="font-size:1.6rem; font-weight:800; margin-top:8px; color:#333;" id="sleep-end-disp">${getTimeStr(sleepEnd.getTime())}</div>
                     </div>
                 </div>
@@ -301,14 +310,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('save-final').onclick = () => {
             const nt = document.getElementById('v-nt')?.value || "";
             const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: nt, imageData: selImg };
-
             if (type === 'feed') res.description = `${document.getElementById('v-in').value}ml`;
             else if (type === 'diaper') res.description = '1회';
             else if (type === 'sleep') {
                 const dm = Math.floor((sleepEnd - sleepStart) / (60 * 1000));
                 res.description = `${Math.floor(dm / 60)}시간 ${dm % 60}분`;
-                res.dm = dm;
-                res.timestamp = sleepEnd.getTime();
+                res.dm = dm; res.timestamp = sleepEnd.getTime();
             } else if (type === 'health') res.description = document.getElementById('v-in').value;
             else if (type === 'photo') res.description = '📖 하루일기';
 
@@ -350,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     ['feed', 'diaper', 'sleep', 'bath', 'health', 'photo'].forEach(t => { const b = document.getElementById(`btn-${t}`); if (b) b.onclick = () => openModal(t); });
-    document.querySelector('.add-btn').onclick = () => openModal('feed');
+    document.querySelector('.add-btn').onclick = () => openModal('quick');
     const gb = document.getElementById('btn-add-growth'); if (gb) gb.onclick = () => { const h = prompt('키'), w = prompt('무게'); if (h && w) { growthData.push({ height: h, weight: w, timestamp: new Date().getTime() }); saveAll(); renderGraph(); } };
     switchView('home');
 });
