@@ -38,17 +38,29 @@ document.addEventListener('DOMContentLoaded', () => {
         backBtn: document.getElementById('header-back-btn')
     };
 
+    let lastSyncTime = 0;
+
     const saveAll = (syncToCloud = true) => {
         localStorage.setItem('babyRecords', JSON.stringify(records));
         localStorage.setItem('babyGrowth', JSON.stringify(growthData));
         localStorage.setItem('babyProfile', JSON.stringify(profile));
 
         if (syncEnabled && familyId && syncToCloud) {
+            const status = document.getElementById('sync-status');
+            if (status) status.innerText = `가족 ID: ${familyId} (동기화 중...)`;
+
             db.ref(`families/${familyId}`).set({
                 records,
                 growthData,
                 profile,
-                lastUpdated: Date.now()
+                lastUpdated: Date.now(),
+                sender: 'web_app' // To potentially identify source
+            }).then(() => {
+                if (status) status.innerText = `가족 ID: ${familyId} (동기화 완료)`;
+                lastSyncTime = Date.now();
+            }).catch(err => {
+                console.error('Sync Error:', err);
+                if (status) status.innerText = `가족 ID: ${familyId} (동기화 오류!)`;
             });
         }
     };
@@ -59,18 +71,30 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('familyId', fid);
         syncEnabled = true;
 
+        const status = document.getElementById('sync-status');
+        if (status) status.innerText = `가족 ID: ${fid} (연결 확인 중...)`;
+
         db.ref(`families/${fid}`).on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
+                // Prevent infinite loop: if we just synced this data to cloud, don't re-apply it from cloud
+                if (data.lastUpdated && data.lastUpdated <= lastSyncTime) return;
+
                 records = data.records || [];
                 growthData = data.growthData || [];
                 profile = data.profile || profile;
                 saveAll(false); // Update local only
                 render();
                 updateHeader();
-                const status = document.getElementById('sync-status');
-                if (status) status.innerText = `가족 ID: ${fid} (동기화 중)`;
+
+                if (status) status.innerText = `가족 ID: ${fid} (최신 데이터 수신)`;
+                lastSyncTime = data.lastUpdated || Date.now();
+            } else {
+                if (status) status.innerText = `가족 ID: ${fid} (새로운 공유 시작)`;
             }
+        }, (error) => {
+            console.error('Firebase Listen Error:', error);
+            if (status) status.innerText = `가족 ID: ${fid} (연결 오류!)`;
         });
     };
 
@@ -193,8 +217,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="item-dot"></div>
                 <div class="item-content" onclick="window.editRec('${r.id}')">
                     <div class="item-main">
-                        <h4>${r.title}</h4>
-                        <div class="item-sub">${r.description || ''}</div>
+                        <div class="item-header-row">
+                            <h4>${r.title}</h4>
+                            <div class="item-sub">${r.description || ''}</div>
+                        </div>
                         ${r.notes ? `<div class="item-notes">${r.notes}</div>` : ''}
                         ${r.imageData ? `<img src="${r.imageData}" style="width:100%; border-radius:18px; margin-top:14px;">` : ''}
                     </div>
@@ -373,27 +399,70 @@ document.addEventListener('DOMContentLoaded', () => {
         if (im) im.onclick = () => fi.click();
         if (fi) fi.onchange = (e) => {
             const f = e.target.files[0];
-            if (f) { const r = new FileReader(); r.onload = (ev) => { selImg = ev.target.result; im.innerHTML = `<img src="${selImg}" style="height:100%;">`; }; r.readAsDataURL(f); }
+            if (f) {
+                im.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:3rem; color:var(--primary);"></i>';
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        let w = img.width, h = img.height;
+                        if (w > MAX_WIDTH) { h = Math.round((h * MAX_WIDTH) / w); w = MAX_WIDTH; }
+                        canvas.width = w; canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        selImg = canvas.toDataURL('image/jpeg', 0.8);
+                        im.innerHTML = `<img src="${selImg}" style="height:100%;">`;
+                    };
+                    img.src = ev.target.result;
+                };
+                r.readAsDataURL(f);
+            }
         };
 
         document.getElementById('save-final').onclick = () => {
-            const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: document.getElementById('v-nt')?.value || "", imageData: selImg };
-            if (type === 'feed') res.description = `${valAmount}g`;
-            else if (type === 'health') res.description = selTitle === '투약' ? `${valAmount}ml` : `${valAmount}.${valDecimal}°C`;
-            else if (type === 'sleep') {
-                let diffMs = sleepEnd - sleepStart;
-                if (diffMs < 0) diffMs += 86400000;
-                const dm = Math.floor(diffMs / 60000);
-                res.description = `${Math.floor(dm / 60)}시간 ${dm % 60}분`;
-                res.dm = dm;
-                res.timestamp = sleepEnd.getTime();
-            }
-            else if (type === 'diaper') res.description = '기저귀 교체';
-            else res.description = '기록 완료';
+            const saveBtn = document.getElementById('save-final');
+            saveBtn.disabled = true;
+            saveBtn.innerText = '저장 중...';
 
-            if (rid) { const ix = records.findIndex(x => x.id === rid); records[ix] = { ...records[ix], ...res }; }
-            else { const id = 'rec_' + Math.random().toString(36).substr(2, 9); records.push({ id, ...res }); }
-            saveAll(); render(); updateHeader(); window.closeModal();
+            try {
+                const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: document.getElementById('v-nt')?.value || "", imageData: selImg };
+                if (type === 'feed') res.description = `${valAmount}g`;
+                else if (type === 'health') res.description = selTitle === '투약' ? `${valAmount}ml` : `${valAmount}.${valDecimal}°C`;
+                else if (type === 'sleep') {
+                    let diffMs = sleepEnd - sleepStart;
+                    let actualEnd = new Date(sleepEnd);
+                    if (diffMs < 0) {
+                        diffMs += 86400000;
+                        // If end time is earlier than start time, it's the next day
+                        actualEnd = new Date(sleepEnd.getTime() + 86400000);
+                    }
+                    const dm = Math.floor(diffMs / 60000);
+                    res.description = `${Math.floor(dm / 60)}시간 ${dm % 60}분`;
+                    res.dm = dm;
+                    res.timestamp = actualEnd.getTime();
+                }
+                else if (type === 'diaper') res.description = '기저귀 교체';
+                else res.description = '기록 완료';
+
+                if (rid) {
+                    const ix = records.findIndex(x => x.id === rid);
+                    records[ix] = { ...records[ix], ...res };
+                } else {
+                    const id = 'rec_' + Math.random().toString(36).substr(2, 9);
+                    records.push({ id, ...res });
+                }
+                saveAll();
+                render();
+                updateHeader();
+                window.closeModal();
+            } catch (err) {
+                console.error(err);
+                alert('저장 중 오류가 발생했습니다.');
+                saveBtn.disabled = false;
+                saveBtn.innerText = rid ? '수정완료' : '기록저장';
+            }
         };
     };
 
