@@ -41,9 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastSyncTime = 0;
 
     const saveAll = (syncToCloud = true) => {
-        localStorage.setItem('babyRecords', JSON.stringify(records));
-        localStorage.setItem('babyGrowth', JSON.stringify(growthData));
-        localStorage.setItem('babyProfile', JSON.stringify(profile));
+        // Try local storage first
+        try {
+            localStorage.setItem('babyRecords', JSON.stringify(records));
+            localStorage.setItem('babyGrowth', JSON.stringify(growthData));
+            localStorage.setItem('babyProfile', JSON.stringify(profile));
+            localStorage.setItem('familyId', familyId || '');
+        } catch (e) {
+            console.warn('Local storage save failed (possible quota exceeded):', e);
+            // Even if local fails, we should still try to sync to cloud if enabled
+        }
 
         if (syncEnabled && familyId && syncToCloud) {
             const status = document.getElementById('sync-status');
@@ -54,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 growthData,
                 profile,
                 lastUpdated: Date.now(),
-                sender: 'web_app' // To potentially identify source
+                sender: 'web_app'
             }).then(() => {
                 if (status) status.innerText = `가족 ID: ${familyId} (동기화 완료)`;
                 lastSyncTime = Date.now();
@@ -77,12 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
         db.ref(`families/${fid}`).on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                // Prevent infinite loop: if we just synced this data to cloud, don't re-apply it from cloud
+                // Prevent infinite loop & ensure we don't overwrite newer local data with older cloud data
                 if (data.lastUpdated && data.lastUpdated <= lastSyncTime) return;
 
-                records = data.records || [];
-                growthData = data.growthData || [];
-                profile = data.profile || profile;
+                // Safety check: Don't overwrite with empty arrays if cloud data is somehow corrupted but has lastUpdated
+                if (data.records) records = data.records;
+                if (data.growthData) growthData = data.growthData;
+                if (data.profile) profile = data.profile;
+
                 saveAll(false); // Update local only
                 render();
                 updateHeader();
@@ -90,7 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (status) status.innerText = `가족 ID: ${fid} (최신 데이터 수신)`;
                 lastSyncTime = data.lastUpdated || Date.now();
             } else {
-                if (status) status.innerText = `가족 ID: ${fid} (새로운 공유 시작)`;
+                // Cloud is empty, push local data to cloud to initialize it
+                if (status) status.innerText = `가족 ID: ${fid} (동기화 시작)`;
+                saveAll(true);
             }
         }, (error) => {
             console.error('Firebase Listen Error:', error);
@@ -406,13 +417,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800;
+                        const MAX_WIDTH = 640; // Reduced from 800 for even better persistence
                         let w = img.width, h = img.height;
                         if (w > MAX_WIDTH) { h = Math.round((h * MAX_WIDTH) / w); w = MAX_WIDTH; }
                         canvas.width = w; canvas.height = h;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, w, h);
-                        selImg = canvas.toDataURL('image/jpeg', 0.8);
+                        selImg = canvas.toDataURL('image/jpeg', 0.7); // Reduced quality for space
                         im.innerHTML = `<img src="${selImg}" style="height:100%;">`;
                     };
                     img.src = ev.target.result;
