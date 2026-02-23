@@ -38,36 +38,52 @@ document.addEventListener('DOMContentLoaded', () => {
         backBtn: document.getElementById('header-back-btn')
     };
 
-    let lastSyncTime = 0;
+    let lastSyncTime = parseInt(localStorage.getItem('lastSyncTime')) || 0;
+
+    // --- Helper: Deep Merge Records ---
+    const mergeRecords = (local, remote) => {
+        const map = new Map();
+        local.forEach(r => { if (r && r.id) map.set(r.id, r); });
+        remote.forEach(r => {
+            if (r && r.id) {
+                if (!map.has(r.id) || r.timestamp > (map.get(r.id).timestamp || 0)) {
+                    map.set(r.id, r);
+                }
+            }
+        });
+        return Array.from(map.values()).sort((a, b) => b.timestamp - a.timestamp);
+    };
 
     const saveAll = (syncToCloud = true) => {
-        // Try local storage first
         try {
             localStorage.setItem('babyRecords', JSON.stringify(records));
             localStorage.setItem('babyGrowth', JSON.stringify(growthData));
             localStorage.setItem('babyProfile', JSON.stringify(profile));
             localStorage.setItem('familyId', familyId || '');
+            localStorage.setItem('lastSyncTime', lastSyncTime.toString());
         } catch (e) {
-            console.warn('Local storage save failed (possible quota exceeded):', e);
-            // Even if local fails, we should still try to sync to cloud if enabled
+            console.warn('Storage quota exceeded:', e);
+            if (e.name === 'QuotaExceededError') {
+                alert('저장 공간이 가득 찼습니다. 오래된 일기 사진을 정리해 주세요.');
+            }
         }
 
         if (syncEnabled && familyId && syncToCloud) {
             const status = document.getElementById('sync-status');
             if (status) status.innerText = `가족 ID: ${familyId} (동기화 중...)`;
 
+            lastSyncTime = Date.now();
             db.ref(`families/${familyId}`).set({
                 records,
                 growthData,
                 profile,
-                lastUpdated: Date.now(),
-                sender: 'web_app'
+                lastUpdated: lastSyncTime
             }).then(() => {
-                if (status) status.innerText = `가족 ID: ${familyId} (동기화 완료)`;
-                lastSyncTime = Date.now();
+                if (status) status.innerText = `가족 ID: ${familyId} (최신 동기화 완료)`;
+                localStorage.setItem('lastSyncTime', lastSyncTime.toString());
             }).catch(err => {
-                console.error('Sync Error:', err);
-                if (status) status.innerText = `가족 ID: ${familyId} (동기화 오류!)`;
+                console.error('Cloud Sync Failed:', err);
+                if (status) status.innerText = `가족 ID: ${familyId} (클라우드 오류)`;
             });
         }
     };
@@ -79,33 +95,36 @@ document.addEventListener('DOMContentLoaded', () => {
         syncEnabled = true;
 
         const status = document.getElementById('sync-status');
-        if (status) status.innerText = `가족 ID: ${fid} (연결 확인 중...)`;
+        if (status) status.innerText = `가족 ID: ${fid} (데이터 병합 중...)`;
 
-        db.ref(`families/${fid}`).on('value', (snapshot) => {
+        db.ref(`families/${fid}`).once('value').then((snapshot) => {
             const data = snapshot.val();
             if (data) {
-                // Prevent infinite loop & ensure we don't overwrite newer local data with older cloud data
-                if (data.lastUpdated && data.lastUpdated <= lastSyncTime) return;
-
-                // Safety check: Don't overwrite with empty arrays if cloud data is somehow corrupted but has lastUpdated
-                if (data.records) records = data.records;
-                if (data.growthData) growthData = data.growthData;
-                if (data.profile) profile = data.profile;
-
-                saveAll(false); // Update local only
+                records = mergeRecords(records, data.records || []);
+                if (data.lastUpdated > lastSyncTime) {
+                    growthData = data.growthData || growthData;
+                    profile = data.profile || profile;
+                }
+                lastSyncTime = Math.max(lastSyncTime, data.lastUpdated || 0);
+                saveAll(true);
                 render();
                 updateHeader();
-
-                if (status) status.innerText = `가족 ID: ${fid} (최신 데이터 수신)`;
-                lastSyncTime = data.lastUpdated || Date.now();
             } else {
-                // Cloud is empty, push local data to cloud to initialize it
-                if (status) status.innerText = `가족 ID: ${fid} (동기화 시작)`;
                 saveAll(true);
             }
-        }, (error) => {
-            console.error('Firebase Listen Error:', error);
-            if (status) status.innerText = `가족 ID: ${fid} (연결 오류!)`;
+
+            db.ref(`families/${fid}`).on('value', (liveSnapshot) => {
+                const liveData = liveSnapshot.val();
+                if (liveData && liveData.lastUpdated > lastSyncTime) {
+                    records = mergeRecords(records, liveData.records || []);
+                    growthData = liveData.growthData || growthData;
+                    profile = liveData.profile || profile;
+                    lastSyncTime = liveData.lastUpdated;
+                    saveAll(false);
+                    render();
+                    updateHeader();
+                }
+            });
         });
     };
 
