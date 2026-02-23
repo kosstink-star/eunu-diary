@@ -337,7 +337,7 @@ header {
 
 .diary-item {
     position: relative;
-    margin-bottom: 35px;
+    margin-bottom: 22px;
     padding-left: 35px;
 }
 
@@ -368,8 +368,8 @@ header {
 
 .item-content {
     background: #fff;
-    border-radius: 24px;
-    padding: 22px;
+    border-radius: 20px;
+    padding: 15px 18px;
     margin-right: 25px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(0, 0, 0, 0.02);
@@ -380,33 +380,33 @@ header {
 
 /* Category Specific Backgrounds */
 .type-feed .item-content {
-    background: #fffcf0;
-    border-color: #fff4cc;
+    background: #fff4cc;
+    border-color: #ffeb99;
 }
 
 .type-diaper .item-content {
-    background: #fdfaf9;
-    border-color: #f5f0ee;
+    background: #f7f0ed;
+    border-color: #ede2dd;
 }
 
 .type-sleep .item-content {
-    background: #f0faff;
-    border-color: #e0f8ff;
+    background: #e1f5ff;
+    border-color: #cceeff;
 }
 
 .type-bath .item-content {
-    background: #fcfdf5;
-    border-color: #fafdca;
+    background: #f5f9de;
+    border-color: #ebf3c3;
 }
 
 .type-health .item-content {
-    background: #f5faff;
-    border-color: #eaf6ff;
+    background: #e8f4ff;
+    border-color: #d1e9ff;
 }
 
 .type-photo .item-content {
-    background: #fcfaff;
-    border-color: #fbf5ff;
+    background: #f3e8ff;
+    border-color: #e9d1ff;
 }
 
 .item-header-row {
@@ -418,16 +418,24 @@ header {
 }
 
 .item-main h4 {
-    font-size: 1.1rem;
+    font-size: 1.0rem;
     font-weight: 950;
     color: #111;
 }
 
 .item-sub {
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     font-weight: 900;
-    color: #666;
+    color: #444;
     flex-shrink: 0;
+}
+
+.item-notes {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 8px;
+    line-height: 1.4;
+    font-weight: 600;
 }
 
 /* Main Modal & 'X' Button Positioning */
