@@ -8,13 +8,39 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let familyId = localStorage.getItem('familyId') || null;
-    let syncEnabled = !!familyId;
+    // --- IndexedDB Configuration (Big Storage) ---
+    const DB_NAME = 'EunuDiaryDB';
+    const DB_VERSION = 1;
+    const STORES = ['records', 'growthData', 'profile', 'sync'];
+
+    const dbPromise = new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            STORES.forEach(s => { if (!db.objectStoreNames.contains(s)) db.createObjectStore(s); });
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+
+    const dbOp = async (type, storeName, key = null, val = null) => {
+        const db = await dbPromise;
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, type === 'read' ? 'readonly' : 'readwrite');
+            const store = tx.objectStore(storeName);
+            let req;
+            if (type === 'read') req = key ? store.get(key) : store.getAll();
+            else if (type === 'write') req = store.put(val, key);
+            else if (type === 'clear') req = store.clear();
+
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    };
 
     // --- State & Storage ---
-    let records = JSON.parse(localStorage.getItem('babyRecords')) || [];
-    let growthData = JSON.parse(localStorage.getItem('babyGrowth')) || [];
-    let profile = JSON.parse(localStorage.getItem('babyProfile')) || {
+    let records = [], growthData = [], familyId = null, syncEnabled = false;
+    let profile = {
         name: '우리은우',
         birthdate: '2026-02-15',
         birthTime: '10:30',
@@ -23,6 +49,42 @@ document.addEventListener('DOMContentLoaded', () => {
         birthHeight: '50'
     };
     let currentView = 'home', chart = null, selectedDate = new Date();
+
+    // --- Data Migration (localStorage -> IndexedDB) ---
+    const migrateData = async () => {
+        const migrated = localStorage.getItem('migratedToIDB');
+        if (migrated) return;
+
+        console.log('Migrating data to IndexedDB...');
+        const oldRecords = JSON.parse(localStorage.getItem('babyRecords')) || [];
+        const oldGrowth = JSON.parse(localStorage.getItem('babyGrowth')) || [];
+        const oldProfile = JSON.parse(localStorage.getItem('babyProfile')) || null;
+        const oldFid = localStorage.getItem('familyId');
+
+        if (oldRecords.length) await dbOp('write', 'records', 'all', oldRecords);
+        if (oldGrowth.length) await dbOp('write', 'growthData', 'all', oldGrowth);
+        if (oldProfile) await dbOp('write', 'profile', 'data', oldProfile);
+        if (oldFid) await dbOp('write', 'sync', 'familyId', oldFid);
+
+        localStorage.setItem('migratedToIDB', 'true');
+        console.log('Migration complete.');
+    };
+
+    const loadAll = async () => {
+        await migrateData();
+        records = await dbOp('read', 'records', 'all') || [];
+        growthData = await dbOp('read', 'growthData', 'all') || [];
+        const savedProfile = await dbOp('read', 'profile', 'data');
+        if (savedProfile) profile = savedProfile;
+        familyId = await dbOp('read', 'sync', 'familyId') || null;
+        syncEnabled = !!familyId;
+
+        if (syncEnabled) setupSync(familyId);
+
+        updateHeader();
+        render(); // Initial render after data load
+    };
+    loadAll();
 
     const selectors = {
         modalOverlay: document.getElementById('modal-overlay'),
@@ -54,18 +116,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from(map.values()).sort((a, b) => b.timestamp - a.timestamp);
     };
 
-    const saveAll = (syncToCloud = true) => {
+    const saveAll = async (syncToCloud = true) => {
         try {
-            localStorage.setItem('babyRecords', JSON.stringify(records));
-            localStorage.setItem('babyGrowth', JSON.stringify(growthData));
-            localStorage.setItem('babyProfile', JSON.stringify(profile));
-            localStorage.setItem('familyId', familyId || '');
-            localStorage.setItem('lastSyncTime', lastSyncTime.toString());
+            await dbOp('write', 'records', 'all', records);
+            await dbOp('write', 'growthData', 'all', growthData);
+            await dbOp('write', 'profile', 'data', profile);
+            await dbOp('write', 'sync', 'familyId', familyId || '');
+            await dbOp('write', 'sync', 'lastSyncTime', lastSyncTime);
         } catch (e) {
-            console.warn('Storage quota exceeded:', e);
-            if (e.name === 'QuotaExceededError') {
-                alert('저장 공간이 가득 찼습니다. 오래된 일기 사진을 정리해 주세요.');
-            }
+            console.error('IndexedDB save failed:', e);
         }
 
         if (syncEnabled && familyId && syncToCloud) {
@@ -80,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastUpdated: lastSyncTime
             }).then(() => {
                 if (status) status.innerText = `가족 ID: ${familyId} (최신 동기화 완료)`;
-                localStorage.setItem('lastSyncTime', lastSyncTime.toString());
+                dbOp('write', 'sync', 'lastSyncTime', lastSyncTime);
             }).catch(err => {
                 console.error('Cloud Sync Failed:', err);
                 if (status) status.innerText = `가족 ID: ${familyId} (클라우드 오류)`;
@@ -97,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const status = document.getElementById('sync-status');
         if (status) status.innerText = `가족 ID: ${fid} (데이터 병합 중...)`;
 
-        db.ref(`families/${fid}`).once('value').then((snapshot) => {
+        db.ref(`families/${fid}`).once('value').then(async (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 records = mergeRecords(records, data.records || []);
@@ -106,21 +165,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     profile = data.profile || profile;
                 }
                 lastSyncTime = Math.max(lastSyncTime, data.lastUpdated || 0);
-                saveAll(true);
+                await saveAll(true);
                 render();
                 updateHeader();
             } else {
-                saveAll(true);
+                await saveAll(true);
             }
 
-            db.ref(`families/${fid}`).on('value', (liveSnapshot) => {
+            db.ref(`families/${fid}`).on('value', async (liveSnapshot) => {
                 const liveData = liveSnapshot.val();
                 if (liveData && liveData.lastUpdated > lastSyncTime) {
                     records = mergeRecords(records, liveData.records || []);
                     growthData = liveData.growthData || growthData;
                     profile = liveData.profile || profile;
                     lastSyncTime = liveData.lastUpdated;
-                    saveAll(false);
+                    await saveAll(false);
                     render();
                     updateHeader();
                 }
@@ -530,19 +589,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sHeight) sHeight.innerText = profile.birthHeight ? `${profile.birthHeight}cm` : '-';
 
         // --- Add Storage Usage Calculation ---
-        const calculateStorage = () => {
-            let total = 0;
-            for (let x in localStorage) {
-                if (localStorage.hasOwnProperty(x)) {
-                    total += ((localStorage[x].length + x.length) * 2);
-                }
-            }
-            const usedMB = (total / (1024 * 1024)).toFixed(2);
-            const status = document.getElementById('sync-status');
-            const percent = ((usedMB / 5) * 100).toFixed(1); // Assuming 5MB limit
+        const calculateStorage = async () => {
+            // Rough estimate for IndexedDB
+            const recordsSize = JSON.stringify(records).length;
+            const growthSize = JSON.stringify(growthData).length;
+            const profileSize = JSON.stringify(profile).length;
+            let totalBytes = (recordsSize + growthSize + profileSize) * 2;
+
+            const usedMB = (totalBytes / (1024 * 1024)).toFixed(2);
+            const percent = ((usedMB / 500) * 100).toFixed(2); // New 500MB limit estimate
             const storageInfo = document.querySelector('.storage-info-text');
             if (storageInfo) {
-                storageInfo.innerText = `사용 중: ${usedMB}MB / 약 5MB (${percent}%)`;
+                storageInfo.innerText = `사용 중: ${usedMB}MB / 약 500MB (${percent}%)`;
+                storageInfo.style.color = '#43a047'; // Green for safe
             }
         };
         calculateStorage();
