@@ -529,6 +529,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sWeight) sWeight.innerText = profile.birthWeight ? `${profile.birthWeight}kg` : '-';
         if (sHeight) sHeight.innerText = profile.birthHeight ? `${profile.birthHeight}cm` : '-';
 
+        // --- Add Storage Usage Calculation ---
+        const calculateStorage = () => {
+            let total = 0;
+            for (let x in localStorage) {
+                if (localStorage.hasOwnProperty(x)) {
+                    total += ((localStorage[x].length + x.length) * 2);
+                }
+            }
+            const usedMB = (total / (1024 * 1024)).toFixed(2);
+            const status = document.getElementById('sync-status');
+            const percent = ((usedMB / 5) * 100).toFixed(1); // Assuming 5MB limit
+            const storageInfo = document.querySelector('.storage-info-text');
+            if (storageInfo) {
+                storageInfo.innerText = `사용 중: ${usedMB}MB / 약 5MB (${percent}%)`;
+            }
+        };
+        calculateStorage();
+
         document.getElementById('set-sync').onclick = () => {
             const fid = prompt('가족 공유 ID를 입력해 주세요. (같은 ID를 쓰면 데이터가 공유됩니다)', familyId || '');
             if (fid) setupSync(fid);
