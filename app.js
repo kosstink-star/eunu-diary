@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        html += `</div></div><button class="fab" onclick="openCapsuleModal()"><i class="fas fa-plus"></i></button>`;
+        html += `</div></div><button class="fab" onclick="openCapsuleModal()"><i class="fas fa-magic"></i></button>`;
         main.innerHTML = html;
         window.scrollTo(0, 0);
     };
