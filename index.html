@@ -237,58 +237,60 @@
                     </div>
                 </div>
             </div>
-            <!-- Time Capsule View -->
-            <main class="content-view" id="view-capsules" style="display:none"></main>
+        </main>
 
-            <nav>
-                <div class="nav-item active" data-view="home">
-                    <i class="fas fa-house"></i>
-                    <span>홈</span>
-                </div>
-                <div class="nav-item" data-view="gallery">
-                    <i class="fas fa-images"></i>
-                    <span>앨범</span>
-                </div>
-                <div class="nav-item" data-view="graph">
-                    <i class="fas fa-chart-line"></i>
-                    <span>분석</span>
-                </div>
-                <div class="nav-item" data-view="calendar">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>달력</span>
-                </div>
-                <div class="nav-item" data-view="settings">
-                    <i class="fas fa-user"></i>
-                    <span>설정</span>
-                </div>
-            </nav>
+        <!-- Time Capsule View -->
+        <main class="content-view" id="view-capsules" style="display:none"></main>
 
-            <div class="modal-overlay" id="modal-overlay">
-                <div class="modal" id="modal-body">
-                    <!-- Modal content injected here -->
+        <nav>
+            <div class="nav-item active" data-view="home">
+                <i class="fas fa-house"></i>
+                <span>홈</span>
+            </div>
+            <div class="nav-item" data-view="gallery">
+                <i class="fas fa-images"></i>
+                <span>앨범</span>
+            </div>
+            <div class="nav-item" data-view="graph">
+                <i class="fas fa-chart-line"></i>
+                <span>분석</span>
+            </div>
+            <div class="nav-item" data-view="calendar">
+                <i class="fas fa-calendar-alt"></i>
+                <span>달력</span>
+            </div>
+            <div class="nav-item" data-view="settings">
+                <i class="fas fa-user"></i>
+                <span>설정</span>
+            </div>
+        </nav>
+
+        <div class="modal-overlay" id="modal-overlay">
+            <div class="modal" id="modal-body">
+                <!-- Modal content injected here -->
+            </div>
+        </div>
+
+        <!-- Universal Wheel Picker -->
+        <div class="dt-picker-overlay" id="dt-picker-overlay">
+            <div class="dt-picker-container">
+                <div class="dt-picker-header">
+                    <button id="dt-cancel">취소</button>
+                    <button id="dt-done">확인</button>
+                </div>
+                <div class="wheel-picker-body" id="wheel-container">
+                    <!-- Wheels injected here dynamically -->
                 </div>
             </div>
+        </div>
 
-            <!-- Universal Wheel Picker -->
-            <div class="dt-picker-overlay" id="dt-picker-overlay">
-                <div class="dt-picker-container">
-                    <div class="dt-picker-header">
-                        <button id="dt-cancel">취소</button>
-                        <button id="dt-done">확인</button>
-                    </div>
-                    <div class="wheel-picker-body" id="wheel-container">
-                        <!-- Wheels injected here dynamically -->
-                    </div>
-                </div>
+        <!-- D+Day Stats Popup -->
+        <div class="stats-popup-overlay" id="stats-popup-overlay">
+            <div class="stats-popup" id="stats-popup">
+                <div class="stats-popup-close" id="stats-popup-close"><i class="fas fa-times"></i></div>
+                <div id="stats-popup-content"></div>
             </div>
-
-            <!-- D+Day Stats Popup -->
-            <div class="stats-popup-overlay" id="stats-popup-overlay">
-                <div class="stats-popup" id="stats-popup">
-                    <div class="stats-popup-close" id="stats-popup-close"><i class="fas fa-times"></i></div>
-                    <div id="stats-popup-content"></div>
-                </div>
-            </div>
+        </div>
     </div>
     <script src="app.js?v=2.0"></script>
 </body>
