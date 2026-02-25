@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- State ---
-    let records = [], growthData = [], familyId = null, syncEnabled = false;
+    let records = [], growthData = [], capsules = [], familyId = null, syncEnabled = false;
     let profile = { name: '우리은우', birthdate: '2026-02-15', birthTime: '10:30', bloodType: 'A형', birthWeight: '3.2', birthHeight: '50' };
     let currentView = 'home', chartH = null, chartW = null, selectedDate = new Date();
     let lastSyncTime = parseInt(localStorage.getItem('lastSyncTime')) || 0;
