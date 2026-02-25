@@ -241,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
         navItems: document.querySelectorAll('.nav-item'), home: document.getElementById('view-home'),
         graph: document.getElementById('view-graph'), calendar: document.getElementById('view-calendar'),
         settings: document.getElementById('view-settings'), gallery: document.getElementById('view-gallery'),
+        capsules: document.getElementById('view-capsules'),
         dDayText: document.getElementById('d-day-text'), backBtn: document.getElementById('header-back-btn')
     };
 
@@ -262,7 +263,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     selectors.navItems.forEach(i => i.onclick = () => switchView(i.dataset.view));
-    if (selectors.backBtn) selectors.backBtn.onclick = () => switchView('home');
+    if (selectors.backBtn) selectors.backBtn.onclick = () => {
+        if (currentView === 'capsules') switchView('settings');
+        else switchView('home');
+    };
     document.getElementById('prev-date').onclick = () => { selectedDate.setDate(selectedDate.getDate() - 1); render(); };
     document.getElementById('next-date').onclick = () => { selectedDate.setDate(selectedDate.getDate() + 1); render(); };
 
@@ -305,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (currentView === 'graph') renderGraph();
         else if (currentView === 'calendar') renderCalendar();
         else if (currentView === 'settings') renderSettings();
+        else if (currentView === 'capsules') renderCapsules();
     }
 
     function renderHome() {
@@ -476,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const btnCapsule = document.getElementById('btn-capsule-link');
-        if (btnCapsule) btnCapsule.onclick = () => renderCapsules();
+        if (btnCapsule) btnCapsule.onclick = () => switchView('capsules');
 
         // 👤 프로필 편집 - 예쁜 모달
         document.getElementById('set-profile').onclick = () => openProfileModal();
@@ -519,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.renderCapsules = () => {
-        const main = selectors.mainContent;
+        const main = selectors.capsules;
         let html = `<div class="view-header"><div class="title-row"><h1>미래로 보내는 타임캡슐</h1></div></div>
         <div class="capsule-container">
             <div class="capsule-intro">
