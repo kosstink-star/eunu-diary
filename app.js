@@ -334,9 +334,17 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        const feedSum = f.filter(r => r.type === 'feed').reduce((a, c) => a + (parseInt(c.description) || 0), 0);
+        const feedML = f.filter(r => r.type === 'feed' && r.title === '분유').reduce((a, c) => a + (parseInt(c.description) || 0), 0);
+        const feedG = f.filter(r => r.type === 'feed' && r.title !== '분유').reduce((a, c) => a + (parseInt(c.description) || 0), 0);
         const sleepSum = f.filter(r => r.type === 'sleep').reduce((a, c) => a + (c.dm || 0), 0);
-        document.querySelector('#btn-feed .stat-val-small').innerText = `${feedSum}ml`;
+
+        let feedStr = '';
+        if (feedML > 0 && feedG > 0) feedStr = `${feedML}ml / ${feedG}g`;
+        else if (feedML > 0) feedStr = `${feedML}ml`;
+        else if (feedG > 0) feedStr = `${feedG}g`;
+        else feedStr = '0ml';
+
+        document.querySelector('#btn-feed .stat-val-small').innerText = feedStr;
         document.querySelector('#btn-diaper .stat-val-small').innerText = `${f.filter(r => r.type === 'diaper').length}회`;
         document.querySelector('#btn-sleep .stat-val-small').innerText = `${Math.floor(sleepSum / 60)}시간 ${sleepSum % 60}분`;
         document.querySelector('#btn-bath .stat-val-small').innerText = `${f.filter(r => r.type === 'bath').length}회`;
@@ -551,7 +559,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const el = document.getElementById('v-val-main'), lbl = document.querySelector('#v-val-trigger span');
             if (!el || !lbl) return;
             if (type === 'health') { if (selTitle === '투약') { lbl.innerText = '투약 용량'; el.innerHTML = `${valAmount}<small>ml</small>`; } else { lbl.innerText = '현재 측정값'; el.innerHTML = `${valAmount}.${valDecimal}<small>°C</small>`; } }
-            else if (type === 'feed') el.innerHTML = `${valAmount}<small>ml</small>`;
+            else if (type === 'feed') {
+                const unit = selTitle === '분유' ? 'ml' : 'g';
+                el.innerHTML = `${valAmount}<small>${unit}</small>`;
+            }
         };
 
         const typeLabel = { feed: '식사', diaper: '배변', sleep: '수면', bath: '목욕', health: '건강', photo: '일기' };
@@ -617,7 +628,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type === 'feed' || type === 'health') updateValDisp();
 
         document.getElementById('modal-dt-disp').onclick = () => openUniversalPicker({ wheels: [{ min: 0, max: 23, init: curDt.getHours() }, { min: 0, max: 59, init: curDt.getMinutes() }], separator: ':' }, res => { curDt.setHours(res[0], res[1]); refreshDtLabel(); });
-        if (type === 'feed') document.getElementById('v-val-trigger').onclick = () => openUniversalPicker({ wheels: [{ min: 0, max: 500, step: 5, init: valAmount, format: v => `${v} ml` }] }, res => { valAmount = res; updateValDisp(); });
+        if (type === 'feed') document.getElementById('v-val-trigger').onclick = () => {
+            const unit = selTitle === '분유' ? 'ml' : 'g';
+            openUniversalPicker({ wheels: [{ min: 0, max: 500, step: 5, init: valAmount, format: v => `${v} ${unit}` }] }, res => { valAmount = res; updateValDisp(); });
+        };
         if (type === 'health') document.getElementById('v-val-trigger').onclick = () => {
             if (selTitle === '투약') openUniversalPicker({ wheels: [{ min: 1, max: 50, init: valAmount, format: v => `${v} ml` }] }, res => { valAmount = res; updateValDisp(); });
             else openUniversalPicker({ wheels: [{ min: 34, max: 42, init: valAmount }, { min: 0, max: 9, init: valDecimal, format: v => `.${v}` }], separator: '' }, res => { valAmount = res[0]; valDecimal = res[1]; updateValDisp(); });
@@ -629,6 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.selection-item').forEach(i => i.onclick = () => {
             document.querySelectorAll('.selection-item').forEach(x => x.classList.remove('active')); i.classList.add('active'); selTitle = i.querySelector('label').innerText;
             if (type === 'health') { if (selTitle === '투약' && valAmount > 50) valAmount = 5; else if (selTitle === '체온' && valAmount < 30) valAmount = 36; updateValDisp(); }
+            if (type === 'feed') updateValDisp();
         });
         const im = document.getElementById('img-b'), fi = document.getElementById('fi-i');
         if (im) im.onclick = () => fi.click();
@@ -644,7 +659,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('save-final'); btn.disabled = true; btn.innerText = '저장 중...';
             try {
                 const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: document.getElementById('v-nt')?.value || '', imageData: selImg };
-                if (type === 'feed') res.description = `${valAmount}ml`;
+                if (type === 'feed') {
+                    const unit = selTitle === '분유' ? 'ml' : 'g';
+                    res.description = `${valAmount}${unit}`;
+                }
                 else if (type === 'health') res.description = selTitle === '투약' ? `${valAmount}ml` : `${valAmount}.${valDecimal}°C`;
                 else if (type === 'sleep') {
                     let dm = sleepEnd - sleepStart; let ae = new Date(sleepEnd);
