@@ -49,9 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // =============================================
     // 🎉 토스트 알림
     // =============================================
-    const showToast = (msg, type = 'success', duration = 3000) => {
+    window.showToast = (msg, type = 'success', duration = 3000) => {
         const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle', warning: 'fa-exclamation-triangle' };
         const tc = document.getElementById('toast-container');
+        if (!tc) return;
         const t = document.createElement('div');
         t.className = `toast ${type}`;
         t.innerHTML = `<i class="fas ${icons[type] || icons.success}"></i> ${msg}`;
@@ -574,11 +575,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('save-capsule').onclick = async () => {
             const msg = document.getElementById('cap-msg').value;
-            const unlock = new Date(document.getElementById('cap-unlock').value).getTime();
-            if (!msg) { showToast('메시지를 입력해주세요.', 'error'); return; }
+            const unlockVal = document.getElementById('cap-unlock').value;
+            if (!msg) { window.showToast('메시지를 입력해주세요.', 'error'); return; }
+            if (!unlockVal) { window.showToast('개봉 날짜를 선택해주세요.', 'error'); return; }
+            const unlock = new Date(unlockVal + 'T00:00:00').getTime();
             capsules.push({ id: 'cap_' + Date.now(), message: msg, imageData: selImg, unlockDate: unlock, createdDate: Date.now() });
             await saveAll(); renderCapsules(); window.closeModal();
-            showToast('타임캡슐이 안전하게 봉인되었어요! 🔒', 'success');
+            window.showToast('타임캡슐이 안전하게 봉인되었어요! 🔒', 'success');
         };
     };
 
