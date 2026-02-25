@@ -229,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         familyId = await dbOp('read', 'sync', 'familyId') || null;
         syncEnabled = !!familyId;
         if (syncEnabled) setupSync(familyId);
+        capsules = await dbOp('read', 'capsules', 'all') || [];
         updateHeader(); render();
     };
     loadAll();
@@ -549,7 +550,6 @@ document.addEventListener('DOMContentLoaded', () => {
         html += `</div></div><button class="fab" onclick="openCapsuleModal()"><i class="fas fa-plus"></i></button>`;
         main.innerHTML = html;
         window.scrollTo(0, 0);
-        updateNav('settings');
     };
 
     window.openCapsuleModal = () => {
@@ -806,6 +806,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event bindings (stat cards, add btn)
     ['feed', 'diaper', 'sleep', 'bath', 'health', 'photo'].forEach(t => { const b = document.getElementById(`btn-${t}`); if (b) b.onclick = () => window.openModal(t); });
     document.getElementById('global-add-btn').onclick = () => window.openModal('quick');
+    const bc = document.getElementById('btn-capsule-link');
+    if (bc) bc.onclick = () => window.renderCapsules();
 
     switchView('home');
 });
