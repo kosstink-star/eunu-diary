@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await dbOp('write', 'records', 'all', records);
             await dbOp('write', 'growthData', 'all', growthData);
             await dbOp('write', 'profile', 'data', profile);
+            await dbOp('write', 'capsules', 'all', capsules);
             await dbOp('write', 'sync', 'familyId', familyId || '');
         } catch (e) { console.error('로컬 저장 실패:', e); }
 
@@ -164,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const now = Date.now();
             lastSyncTime = now;
             localStorage.setItem('lastSyncTime', now);
-            db.ref(`families/${familyId}`).set({ records, growthData, profile, lastUpdated: now })
+            db.ref(`families/${familyId}`).set({ records, growthData, profile, capsules, lastUpdated: now })
                 .then(() => { if (status) status.innerText = `가족 ID: ${familyId} (동기화 완료)`; })
                 .catch((e) => {
                     console.error('클라우드 동기화 실패:', e);
@@ -182,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = snap.val();
             if (data) {
                 records = mergeRecords(records, data.records || []);
+                capsules = mergeRecords(capsules, data.capsules || []);
                 if ((data.lastUpdated || 0) > lastSyncTime) {
                     growthData = data.growthData || growthData;
                     profile = data.profile || profile;
@@ -195,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!live || live.lastUpdated <= lastSyncTime) return;
                 console.log('실시간 동기화 업데이트 수신:', live.lastUpdated);
                 records = mergeRecords(records, live.records || []);
+                capsules = mergeRecords(capsules, live.capsules || []);
                 growthData = live.growthData || growthData;
                 profile = live.profile || profile;
                 lastSyncTime = live.lastUpdated;
@@ -202,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await dbOp('write', 'records', 'all', records);
                 await dbOp('write', 'growthData', 'all', growthData);
                 await dbOp('write', 'profile', 'data', profile);
+                await dbOp('write', 'capsules', 'all', capsules);
                 render(); updateHeader();
                 if (status) status.innerText = `가족 ID: ${fid} (방금 업데이트됨)`;
                 showToast('가족 구성원이 새 기록을 추가했어요!', 'info');
@@ -469,11 +473,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (fid) { setupSync(fid); showToast('가족 공유가 설정되었어요! 💑', 'success'); }
         };
 
+        const btnCapsule = document.getElementById('btn-capsule-link');
+        if (btnCapsule) btnCapsule.onclick = () => renderCapsules();
+
         // 👤 프로필 편집 - 예쁜 모달
         document.getElementById('set-profile').onclick = () => openProfileModal();
 
         document.getElementById('set-backup').onclick = () => {
-            const data = { records, growthData, profile, exportDate: new Date().toISOString() };
+            const data = { records, growthData, profile, capsules, exportDate: new Date().toISOString() };
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
             a.download = `eunu_diary_backup_${new Date().toISOString().split('T')[0]}.json`;
@@ -489,8 +496,9 @@ document.addEventListener('DOMContentLoaded', () => {
             r.onload = async ev => {
                 try {
                     const data = JSON.parse(ev.target.result);
-                    if (!confirm(`백업 날짜: ${data.exportDate?.split('T')[0] || '알 수 없음'}\n기록 ${data.records?.length || 0}개를 복원할까요?\n현재 데이터와 병합됩니다.`)) return;
+                    if (!confirm(`백업 날짜: ${data.exportDate?.split('T')[0] || '알 수 없음'}\n기록 복원을 시작할까요?\n현재 데이터와 병합됩니다.`)) return;
                     records = mergeRecords(records, data.records || []);
+                    capsules = mergeRecords(capsules, data.capsules || []);
                     if (data.growthData?.length) growthData = [...growthData, ...data.growthData].filter((v, i, a) => a.findIndex(x => x.timestamp === v.timestamp) === i);
                     if (data.profile) profile = { ...profile, ...data.profile };
                     await saveAll(); render(); updateHeader();
@@ -502,11 +510,97 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('set-reset').onclick = () => {
             if (confirm('모든 데이터를 삭제할까요? 되돌릴 수 없습니다.')) {
-                records = []; growthData = []; saveAll(); render(); updateHeader();
+                records = []; growthData = []; capsules = []; saveAll(); render(); updateHeader();
                 showToast('모든 기록이 삭제되었어요.', 'warning');
             }
         };
     }
+
+    window.renderCapsules = () => {
+        const main = selectors.mainContent;
+        let html = `<div class="view-header"><div class="title-row"><h1>미래로 보내는 타임캡슐</h1></div></div>
+        <div class="capsule-container">
+            <div class="capsule-intro">
+                아기에게 전하고 싶은 현재의 마음을 기록해보세요.<br>설정한 날짜가 되기 전까지는 열어볼 수 없습니다. ✨
+            </div>
+            <div class="capsule-list">`;
+
+        if (capsules.length === 0) {
+            html += `<div class="empty-state" style="margin-top:40px;"><i class="fas fa-lock" style="font-size:3rem;color:#eee;margin-bottom:15px;"></i><p>아직 저장된 타임캡슐이 없습니다.</p></div>`;
+        } else {
+            const now = Date.now();
+            [...capsules].sort((a, b) => b.createdDate - a.createdDate).forEach(c => {
+                const isUnlocked = now >= c.unlockDate;
+                const dday = Math.ceil((c.unlockDate - now) / 86400000);
+                html += `
+                <div class="capsule-card ${isUnlocked ? 'unlocked' : 'locked'}" onclick="${isUnlocked ? `viewCapsule('${c.id}')` : `showToast('아직 열어볼 수 없습니다. D-${dday}일 남았어요!', 'info')`}">
+                    <div class="capsule-status">
+                        <i class="fas ${isUnlocked ? 'fa-lock-open' : 'fa-lock'}"></i>
+                        <span>${isUnlocked ? '개봉됨' : `D-${dday}`}</span>
+                    </div>
+                    <div class="capsule-info">
+                        <strong>${isUnlocked ? (c.message.length > 20 ? c.message.substring(0, 20) + '...' : c.message) : '비밀 메시지가 숨겨져 있습니다'}</strong>
+                        <small>${new Date(c.createdDate).toLocaleDateString()} 작성</small>
+                    </div>
+                </div>`;
+            });
+        }
+
+        html += `</div></div><button class="fab" onclick="openCapsuleModal()"><i class="fas fa-plus"></i></button>`;
+        main.innerHTML = html;
+        window.scrollTo(0, 0);
+        updateNav('settings');
+    };
+
+    window.openCapsuleModal = () => {
+        selectors.modalOverlay.style.display = 'flex';
+        let selImg = null, unlockDate = Date.now() + (365 * 86400000); // 기본 1년 뒤
+        selectors.modalBody.innerHTML = `
+            <div class="modal-header-row"><h3>타임캡슐 작성</h3><i class="fas fa-times close-icon" onclick="window.closeModal()"></i></div>
+            <div id="cap-img-b" class="capsule-modal-preview"><i class="fas fa-camera"></i><input type="file" id="cap-fi" style="display:none" accept="image/*"></div>
+            <div class="profile-field"><label>언제 열어볼까요? (개봉 날짜)</label><input id="cap-unlock" type="date" value="${new Date(unlockDate).toISOString().split('T')[0]}"></div>
+            <div class="note-container" style="margin-top:20px;min-height:150px;"><textarea id="cap-msg" placeholder="미래의 아기에게 남길 메시지를 적어주세요..."></textarea></div>
+            <div class="modal-footer"><button class="btn btn-cancel" onclick="window.closeModal()">취소</button><button class="btn btn-save" id="save-capsule">캡슐 봉인하기</button></div>`;
+
+        const im = document.getElementById('cap-img-b'), fi = document.getElementById('cap-fi');
+        im.onclick = () => fi.click();
+        fi.onchange = e => {
+            const f = e.target.files[0]; if (!f) return;
+            im.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const r = new FileReader();
+            r.onload = ev => { const img = new Image(); img.onload = () => { const c = document.createElement('canvas'), MAX = 800; let w = img.width, h = img.height; if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h); selImg = c.toDataURL('image/jpeg', 0.82); im.innerHTML = `<img src="${selImg}">`; }; img.src = ev.target.result; };
+            r.readAsDataURL(f);
+        };
+
+        document.getElementById('save-capsule').onclick = async () => {
+            const msg = document.getElementById('cap-msg').value;
+            const unlock = new Date(document.getElementById('cap-unlock').value).getTime();
+            if (!msg) { showToast('메시지를 입력해주세요.', 'error'); return; }
+            capsules.push({ id: 'cap_' + Date.now(), message: msg, imageData: selImg, unlockDate: unlock, createdDate: Date.now() });
+            await saveAll(); renderCapsules(); window.closeModal();
+            showToast('타임캡슐이 안전하게 봉인되었어요! 🔒', 'success');
+        };
+    };
+
+    window.viewCapsule = (id) => {
+        const c = capsules.find(x => x.id === id);
+        if (!c) return;
+        selectors.modalOverlay.style.display = 'flex';
+        selectors.modalBody.innerHTML = `
+            <div class="modal-header-row"><h3>타임캡슐 개봉</h3><i class="fas fa-times close-icon" onclick="window.closeModal()"></i></div>
+            ${c.imageData ? `<div class="capsule-modal-preview" style="border:none;"><img src="${c.imageData}"></div>` : ''}
+            <div class="note-container" style="background:transparent;border:none;padding:0;min-height:auto;"><p style="white-space:pre-wrap;line-height:1.6;font-size:1.1rem;color:var(--text-main);">${c.message}</p></div>
+            <div style="margin-top:20px;font-size:0.85rem;color:var(--text-sub);text-align:right;">작성일: ${new Date(c.createdDate).toLocaleDateString()}</div>
+            <div class="modal-footer"><button class="btn btn-cancel" onclick="delCapsule('${id}')">캡슐 삭제</button><button class="btn btn-save" onclick="window.closeModal()">닫기</button></div>`;
+    };
+
+    window.delCapsule = async (id) => {
+        if (confirm('이 타임캡슐을 영구 폐기할까요?')) {
+            capsules = capsules.filter(x => x.id !== id);
+            await saveAll(); renderCapsules(); window.closeModal();
+            showToast('타임캡슐이 삭제되었어요.', 'warning');
+        }
+    };
 
     // 👤 프로필 모달 (예쁜 폼 UI)
     function openProfileModal() {

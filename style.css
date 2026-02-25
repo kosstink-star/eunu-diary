@@ -1759,8 +1759,115 @@ nav {
     color: var(--text-main);
     outline: none;
     transition: border-color 0.2s;
+    appearance: none;
     -webkit-appearance: none;
 }
+
+/* Time Capsule */
+.capsule-container {
+    padding: 0 18px 100px;
+}
+
+.capsule-intro {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 18px;
+    font-size: 0.9rem;
+    color: var(--text-sub);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.capsule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.capsule-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid var(--border);
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.capsule-card:active {
+    transform: scale(0.98);
+}
+
+.capsule-status {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--input-bg);
+}
+
+.capsule-card.locked .capsule-status {
+    color: #bdbdbd;
+}
+
+.capsule-card.unlocked .capsule-status {
+    background: #fff8e1;
+    color: #ffa000;
+}
+
+.capsule-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.capsule-info strong {
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.capsule-info small {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+}
+
+.capsule-modal-preview {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: var(--input-bg);
+    border-radius: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px dashed var(--border);
+    cursor: pointer;
+    position: relative;
+}
+
+.capsule-modal-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.capsule-modal-preview i {
+    font-size: 2.5rem;
+    color: #ccc;
+}
+
 
 .profile-field input:focus {
     border-color: var(--primary-light);
