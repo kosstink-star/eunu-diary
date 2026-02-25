@@ -6,9 +6,10 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>우리은우 성장일기 - Eunu's Diary</title>
-    <link rel="stylesheet" href="style.css?v=1.4">
+    <link rel="stylesheet" href="style.css?v=2.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- PWA & Mobile Optimization -->
     <link rel="manifest" href="manifest.json">
@@ -18,14 +19,15 @@
     <meta name="apple-mobile-web-app-title" content="은우성장일기">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 
 <body>
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toast-container"></div>
+
     <div id="app">
         <header>
             <div class="header-left">
@@ -36,18 +38,35 @@
                 </div>
             </div>
             <div class="header-right">
+                <!-- 검색 버튼 -->
+                <div class="icon-btn" id="search-btn" title="검색">
+                    <i class="fas fa-search"></i>
+                </div>
+                <!-- 다크모드 토글 -->
+                <div class="icon-btn" id="dark-mode-btn" title="다크모드">
+                    <i class="fas fa-moon"></i>
+                </div>
                 <div class="heart-box">
                     <i class="fas fa-heart"></i>
                 </div>
             </div>
         </header>
 
+        <!-- 검색 바 -->
+        <div class="search-bar-wrapper" id="search-bar-wrapper" style="display:none;">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="기록 검색... (예: 식사, 수면)">
+                <i class="fas fa-times" id="search-clear"></i>
+            </div>
+        </div>
+
         <main class="dashboard" id="view-home">
             <div class="date-nav">
                 <button class="nav-arrow" id="prev-date"><i class="fas fa-chevron-left"></i></button>
                 <div class="date-display" id="date-display-trigger">
                     <i class="far fa-calendar-alt"></i>
-                    <span id="current-date-text">02월 20일 (오늘)</span>
+                    <span id="current-date-text">02월 23일 (오늘)</span>
                 </div>
                 <button class="nav-arrow" id="next-date"><i class="fas fa-chevron-right"></i></button>
             </div>
@@ -66,27 +85,17 @@
                 <div class="stat-card" data-type="sleep" id="btn-sleep">
                     <div class="icon-box"><i class="fas fa-moon"></i></div>
                     <span class="stat-label">수면</span>
-                    <span class="stat-val-small">0시간</span>
+                    <span class="stat-val-small">0시간 0분</span>
                 </div>
                 <div class="stat-card" data-type="bath" id="btn-bath">
                     <div class="icon-box"><i class="fas fa-bath"></i></div>
                     <span class="stat-label">목욕</span>
                     <span class="stat-val-small">0회</span>
                 </div>
-                <div class="stat-card" data-type="health" id="btn-health">
-                    <div class="icon-box"><i class="fas fa-thermometer-half"></i></div>
-                    <span class="stat-label">건강</span>
-                    <span class="stat-val-small">0개</span>
-                </div>
-                <div class="stat-card" data-type="photo" id="btn-photo">
-                    <div class="icon-box"><i class="fas fa-camera-retro"></i></div>
-                    <span class="stat-label">일기</span>
-                    <span class="stat-val-small">0개</span>
-                </div>
             </div>
 
             <div class="timeline-container" id="timeline">
-                <!-- Timeline items -->
+                <!-- Records will be injected here -->
             </div>
 
             <button class="add-btn" id="global-add-btn">
@@ -94,57 +103,79 @@
             </button>
         </main>
 
-        <main class="content-view" id="view-graph" style="display:none;">
+        <!-- Gallery View -->
+        <main class="content-view" id="view-gallery" style="display:none">
             <div class="view-header">
-                <h2>성장 그래프</h2>
-                <div class="header-actions">
-                    <button class="btn-premium" id="btn-add-growth"><i class="fas fa-plus"></i> 성장 기록</button>
-                </div>
+                <h2>사진 앨범</h2>
             </div>
             <div class="content-inner">
-                <div class="info-card">
-                    <p><i class="fas fa-info-circle"></i> 우리 아이의 키와 몸무게 추이를 확인하세요.</p>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="growthChart"></canvas>
+                <div class="gallery-grid" id="gallery-grid">
+                    <!-- Photos will be injected here -->
                 </div>
             </div>
         </main>
 
-        <main class="content-view" id="view-calendar" style="display:none;">
+        <!-- Graph View -->
+        <main class="content-view" id="view-graph" style="display:none">
             <div class="view-header">
-                <h2>활동 달력</h2>
+                <h2>성장 분석</h2>
+                <button class="btn-premium" onclick="window.openGrowthModal()">
+                    <i class="fas fa-plus"></i> 성장 기록
+                </button>
             </div>
             <div class="content-inner">
-                <div id="calendar-container"></div>
+                <div id="growth-summary-cards" style="display:flex; gap:12px; margin-bottom:20px;"></div>
+                <div class="chart-wrapper" id="chart-wrapper-height" style="margin-bottom:20px;">
+                    <div class="chart-title"><i class="fas fa-ruler-vertical" style="color:#ff9a8b;"></i> 키 변화 (cm)
+                    </div>
+                    <canvas id="growthChartHeight" height="160"></canvas>
+                </div>
+                <div class="chart-wrapper" id="chart-wrapper-weight">
+                    <div class="chart-title"><i class="fas fa-weight" style="color:#1e88e5;"></i> 몸무게 변화 (kg)</div>
+                    <canvas id="growthChartWeight" height="160"></canvas>
+                </div>
+                <div class="info-card" id="graph-empty-state"
+                    style="display:none; text-align:center; padding:60px 20px;">
+                    <div style="font-size:3rem; margin-bottom:16px;">📏</div>
+                    <div style="font-weight:900; margin-bottom:10px; font-size:1.1rem;">아직 성장 기록이 없어요</div>
+                    <div style="font-size:0.9rem; color:#999;">위의 '성장 기록' 버튼을 눌러<br>키와 몸무게를 기록해보세요!</div>
+                </div>
             </div>
         </main>
 
-        <main class="content-view" id="view-settings" style="display:none;">
+        <!-- Calendar View -->
+        <main class="content-view" id="view-calendar" style="display:none">
+            <div class="view-header">
+                <h2>달력 보기</h2>
+            </div>
+            <div class="content-inner">
+                <div id="inline-calendar"></div>
+            </div>
+        </main>
+
+        <!-- Settings View -->
+        <main class="content-view" id="view-settings" style="display:none">
             <div class="view-header">
                 <h2>설정</h2>
             </div>
             <div class="content-inner">
                 <div class="settings-list">
                     <div class="setting-item" id="set-profile">
-                        <div class="setting-icon"><i class="fas fa-user-edit"></i></div>
-                        <div class="setting-info">
-                            <strong>프로필 관리</strong>
-                            <span>우리 아기의 소중한 정보를 관리해요.</span>
+                        <div class="setting-icon" style="background:#fff3e0; color:#ff9800;"><i class="fas fa-baby"></i>
                         </div>
-                        <i class="fas fa-chevron-right arrow"></i>
-                    </div>
-                    <div id="profile-summary"
-                        style="padding: 15px; background: #fff; border-radius: 20px; border: 1px solid var(--border); margin-top: 10px; font-size: 0.85rem; color: var(--text-sub);">
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div><i class="far fa-clock"></i> 태어난 시간: <strong id="sum-time"
-                                    style="color:var(--text-main)">-</strong></div>
-                            <div><i class="fas fa-tint"></i> 혈액형: <strong id="sum-blood"
-                                    style="color:var(--text-main)">-</strong></div>
-                            <div><i class="fas fa-weight"></i> 출생 체중: <strong id="sum-weight"
-                                    style="color:var(--text-main)">-</strong></div>
-                            <div><i class="fas fa-ruler-vertical"></i> 출생 키: <strong id="sum-height"
-                                    style="color:var(--text-main)">-</strong></div>
+                        <div class="setting-info">
+                            <strong>은우 프로필</strong>
+                            <div
+                                style="font-size:0.8rem; color:#888; margin-top:4px; display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                                <div><i class="far fa-clock"></i> 태어난 시간: <strong id="sum-time"
+                                        style="color:var(--text-main)">-</strong></div>
+                                <div><i class="fas fa-tint"></i> 혈액형: <strong id="sum-blood"
+                                        style="color:var(--text-main)">-</strong></div>
+                                <div><i class="fas fa-weight"></i> 출생 체중: <strong id="sum-weight"
+                                        style="color:var(--text-main)">-</strong></div>
+                                <div><i class="fas fa-ruler-vertical"></i> 출생 키: <strong id="sum-height"
+                                        style="color:var(--text-main)">-</strong></div>
+                            </div>
                         </div>
                     </div>
                     <div class="setting-item" id="set-sync" style="background: #fff9f9; border: 1px dashed #ffcdd2;">
@@ -168,6 +199,16 @@
                         </div>
                         <i class="fas fa-chevron-right arrow"></i>
                     </div>
+                    <div class="setting-item" id="set-restore">
+                        <div class="setting-icon" style="background:#e8eaf6; color:#3949ab;"><i
+                                class="fas fa-file-upload"></i></div>
+                        <div class="setting-info">
+                            <strong>백업 데이터 복원</strong>
+                            <span>저장된 JSON 파일에서 기록을 복원해요.</span>
+                        </div>
+                        <i class="fas fa-chevron-right arrow"></i>
+                        <input type="file" id="restore-file-input" accept=".json" style="display:none;">
+                    </div>
                     <div class="setting-item delete" id="set-reset">
                         <div class="setting-icon"><i class="fas fa-trash-alt"></i></div>
                         <div class="setting-info">
@@ -184,9 +225,13 @@
                 <i class="fas fa-house"></i>
                 <span>홈</span>
             </div>
+            <div class="nav-item" data-view="gallery">
+                <i class="fas fa-images"></i>
+                <span>앨범</span>
+            </div>
             <div class="nav-item" data-view="graph">
                 <i class="fas fa-chart-line"></i>
-                <span>평균</span>
+                <span>분석</span>
             </div>
             <div class="nav-item" data-view="calendar">
                 <i class="fas fa-calendar-alt"></i>
@@ -198,27 +243,34 @@
             </div>
         </nav>
 
-        <!-- General Modal -->
         <div class="modal-overlay" id="modal-overlay">
-            <div class="modal">
-                <div id="modal-body"></div>
+            <div class="modal" id="modal-body">
+                <!-- Modal content injected here -->
             </div>
         </div>
 
-        <!-- Universal Picker (Used for Time, Amount, Temperature) -->
+        <!-- Universal Wheel Picker -->
         <div class="dt-picker-overlay" id="dt-picker-overlay">
             <div class="dt-picker-container">
                 <div class="dt-picker-header">
                     <button id="dt-cancel">취소</button>
-                    <button id="dt-done">선택완료</button>
+                    <button id="dt-done">확인</button>
                 </div>
                 <div class="wheel-picker-body" id="wheel-container">
                     <!-- Wheels injected here dynamically -->
                 </div>
             </div>
         </div>
+
+        <!-- D+Day Stats Popup -->
+        <div class="stats-popup-overlay" id="stats-popup-overlay">
+            <div class="stats-popup" id="stats-popup">
+                <div class="stats-popup-close" id="stats-popup-close"><i class="fas fa-times"></i></div>
+                <div id="stats-popup-content"></div>
+            </div>
+        </div>
     </div>
-    <script src="app.js?v=1.1"></script>
+    <script src="app.js?v=2.0"></script>
 </body>
 
 </html>
