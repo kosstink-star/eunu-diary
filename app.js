@@ -180,7 +180,25 @@ document.addEventListener('DOMContentLoaded', () => {
         familyId = fid; syncEnabled = true;
         const status = document.getElementById('sync-status');
         if (status) status.innerText = `가족 ID: ${fid} (연결 중...)`;
+
+        // 연결 상태 감시 (Firebase 전용 레퍼런스)
+        db.ref('.info/connected').on('value', snap => {
+            if (snap.val() === false && status) {
+                status.innerText = `가족 ID: ${fid} (오프라인/연결 끊김)`;
+                status.style.color = '#f44336';
+            }
+        });
+
+        // 타임아웃 처리 (5초)
+        const timeout = setTimeout(() => {
+            if (status && status.innerText.includes('연결 중')) {
+                status.innerText = `가족 ID: ${fid} (응답 대기 중...)`;
+                status.style.color = '#ff9800';
+            }
+        }, 5000);
+
         db.ref(`families/${fid}`).once('value').then(async snap => {
+            clearTimeout(timeout);
             const data = snap.val();
             if (data) {
                 records = mergeRecords(records, data.records || []);
@@ -191,26 +209,51 @@ document.addEventListener('DOMContentLoaded', () => {
                     lastSyncTime = data.lastUpdated;
                     localStorage.setItem('lastSyncTime', lastSyncTime);
                 }
-                await saveAll(true); render(); updateHeader();
-            } else { await saveAll(true); }
+                await saveAll(false); // 로컬에만 저장 (루프 방지)
+                render(); updateHeader();
+            } else {
+                // 데이터가 없는 경우 (새 가족 ID) 현재 데이터 전송
+                await saveAll(true);
+            }
+
+            if (status) {
+                status.innerText = `가족 ID: ${fid} (동기화 완료)`;
+                status.style.color = '#43a047';
+            }
+
+            // 실시간 리스너 설정
             db.ref(`families/${fid}`).on('value', async liveSnap => {
                 const live = liveSnap.val();
                 if (!live || live.lastUpdated <= lastSyncTime) return;
-                console.log('실시간 동기화 업데이트 수신:', live.lastUpdated);
+
+                console.log('실시간 업데이트 수신:', live.lastUpdated);
                 records = mergeRecords(records, live.records || []);
                 capsules = mergeRecords(capsules, live.capsules || []);
                 growthData = live.growthData || growthData;
                 profile = live.profile || profile;
                 lastSyncTime = live.lastUpdated;
                 localStorage.setItem('lastSyncTime', lastSyncTime);
+
                 await dbOp('write', 'records', 'all', records);
                 await dbOp('write', 'growthData', 'all', growthData);
                 await dbOp('write', 'profile', 'data', profile);
                 await dbOp('write', 'capsules', 'all', capsules);
+
                 render(); updateHeader();
-                if (status) status.innerText = `가족 ID: ${fid} (방금 업데이트됨)`;
-                showToast('가족 구성원이 새 기록을 추가했어요!', 'info');
+                if (status) {
+                    status.innerText = `가족 ID: ${fid} (방금 업데이트됨)`;
+                    status.style.color = '#43a047';
+                }
+                window.showToast('가족 구성원이 새 기록을 추가했어요! 👨‍👩‍👧‍👦', 'info');
             });
+        }).catch(err => {
+            clearTimeout(timeout);
+            console.error('동기화 오류:', err);
+            if (status) {
+                status.innerText = `가족 ID: ${fid} (연결 실패: ${err.code || '오류'})`;
+                status.style.color = '#f44336';
+            }
+            window.showToast('데이터 동기화에 실패했습니다.', 'error');
         });
     };
 
