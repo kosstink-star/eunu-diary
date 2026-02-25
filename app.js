@@ -184,8 +184,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // 연결 상태 감시 (Firebase 전용 레퍼런스)
         db.ref('.info/connected').on('value', snap => {
             if (snap.val() === false && status) {
+                // 실제로 연결이 끊겼을 때만 표시
                 status.innerText = `가족 ID: ${fid} (오프라인/연결 끊김)`;
                 status.style.color = '#f44336';
+            } else if (snap.val() === true && status) {
+                // 다시 연결되었을 때 (초기 연결 포함)
+                if (status.innerText.includes('오프라인')) {
+                    status.innerText = `가족 ID: ${fid} (연결 복구됨)`;
+                    status.style.color = '#43a047';
+                    // 잠시 후 '동기화 완료'로 변경
+                    setTimeout(() => { if (status) status.innerText = `가족 ID: ${fid} (동기화 완료)`; }, 2000);
+                }
             }
         });
 
