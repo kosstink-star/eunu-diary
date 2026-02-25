@@ -305,7 +305,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectors.dDayText) selectors.dDayText.innerText = calculateDDay();
         const title = document.querySelector('header h1');
         if (title) title.innerText = `${profile.name} 육아 기록`;
-        if (selectors.backBtn) selectors.backBtn.style.display = (currentView === 'home' ? 'none' : 'block');
+        // 뒤로가기 버튼은 타임캡슐 뷰(설정의 하위 뷰)에서만 표시되도록 수정
+        if (selectors.backBtn) selectors.backBtn.style.display = (currentView === 'capsules' ? 'block' : 'none');
     };
 
     const switchView = (vn) => {
@@ -577,8 +578,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.renderCapsules = () => {
         const main = selectors.capsules;
-        let html = `<div class="view-header"><div class="title-row"><h1>미래로 보내는 타임캡슐</h1></div></div>
-        <div class="capsule-container">
+        // 디자인 일관성을 위해 h2와 btn-premium 적용, content-inner로 감싸기
+        let html = `<div class="view-header">
+            <h2>미래로 보내는 타임캡슐</h2>
+            <button class="btn-premium" onclick="openCapsuleModal()">
+                <i class="fas fa-plus"></i> 기록하기
+            </button>
+        </div>
+        <div class="content-inner">
             <div class="capsule-intro">
                 아기에게 전하고 싶은 현재의 마음을 기록해보세요.<br>설정한 날짜가 되기 전까지는 열어볼 수 없습니다. ✨
             </div>
@@ -605,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        html += `</div></div><button class="fab" onclick="openCapsuleModal()"><i class="fas fa-magic"></i></button>`;
+        html += `</div></div>`;
         main.innerHTML = html;
         window.scrollTo(0, 0);
     };
