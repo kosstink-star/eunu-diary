@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="stats-grid-item">
                     <div class="label">🍼 총 식사량</div>
-                    <div class="value">${feedTotal}<small>g</small></div>
+                    <div class="value">${feedTotal}<small>ml</small></div>
                 </div>
                 <div class="stats-grid-item">
                     <div class="label">🩺 배변 횟수</div>
@@ -161,10 +161,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (syncEnabled && familyId && syncToCloud) {
             const status = document.getElementById('sync-status');
-            const now = Date.now(); lastSyncTime = now;
+            const now = Date.now();
+            lastSyncTime = now;
+            localStorage.setItem('lastSyncTime', now);
             db.ref(`families/${familyId}`).set({ records, growthData, profile, lastUpdated: now })
                 .then(() => { if (status) status.innerText = `가족 ID: ${familyId} (동기화 완료)`; })
-                .catch(() => { if (status) status.innerText = `가족 ID: ${familyId} (연결 오류)`; });
+                .catch((e) => {
+                    console.error('클라우드 동기화 실패:', e);
+                    if (status) status.innerText = `가족 ID: ${familyId} (연결 오류)`;
+                });
         }
     };
 
@@ -177,14 +182,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = snap.val();
             if (data) {
                 records = mergeRecords(records, data.records || []);
-                if ((data.lastUpdated || 0) > lastSyncTime) { growthData = data.growthData || growthData; profile = data.profile || profile; lastSyncTime = data.lastUpdated; }
+                if ((data.lastUpdated || 0) > lastSyncTime) {
+                    growthData = data.growthData || growthData;
+                    profile = data.profile || profile;
+                    lastSyncTime = data.lastUpdated;
+                    localStorage.setItem('lastSyncTime', lastSyncTime);
+                }
                 await saveAll(true); render(); updateHeader();
             } else { await saveAll(true); }
             db.ref(`families/${fid}`).on('value', async liveSnap => {
                 const live = liveSnap.val();
                 if (!live || live.lastUpdated <= lastSyncTime) return;
+                console.log('실시간 동기화 업데이트 수신:', live.lastUpdated);
                 records = mergeRecords(records, live.records || []);
-                growthData = live.growthData || growthData; profile = live.profile || profile; lastSyncTime = live.lastUpdated;
+                growthData = live.growthData || growthData;
+                profile = live.profile || profile;
+                lastSyncTime = live.lastUpdated;
+                localStorage.setItem('lastSyncTime', lastSyncTime);
                 await dbOp('write', 'records', 'all', records);
                 await dbOp('write', 'growthData', 'all', growthData);
                 await dbOp('write', 'profile', 'data', profile);
@@ -322,10 +336,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const feedSum = f.filter(r => r.type === 'feed').reduce((a, c) => a + (parseInt(c.description) || 0), 0);
         const sleepSum = f.filter(r => r.type === 'sleep').reduce((a, c) => a + (c.dm || 0), 0);
-        document.querySelector('#btn-feed .stat-val-small').innerText = `${feedSum}g`;
+        document.querySelector('#btn-feed .stat-val-small').innerText = `${feedSum}ml`;
         document.querySelector('#btn-diaper .stat-val-small').innerText = `${f.filter(r => r.type === 'diaper').length}회`;
         document.querySelector('#btn-sleep .stat-val-small').innerText = `${Math.floor(sleepSum / 60)}시간 ${sleepSum % 60}분`;
         document.querySelector('#btn-bath .stat-val-small').innerText = `${f.filter(r => r.type === 'bath').length}회`;
+        const healthEl = document.querySelector('#btn-health .stat-val-small');
+        const photoEl = document.querySelector('#btn-photo .stat-val-small');
+        if (healthEl) healthEl.innerText = `${f.filter(r => r.type === 'health').length}회`;
+        if (photoEl) photoEl.innerText = `${records.filter(r => r.type === 'photo' && r.imageData).length}개`;
     }
 
     window.editRec = (id) => { const r = records.find(x => x.id === id); if (r) window.openModal(r.type, id); };
@@ -533,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const el = document.getElementById('v-val-main'), lbl = document.querySelector('#v-val-trigger span');
             if (!el || !lbl) return;
             if (type === 'health') { if (selTitle === '투약') { lbl.innerText = '투약 용량'; el.innerHTML = `${valAmount}<small>ml</small>`; } else { lbl.innerText = '현재 측정값'; el.innerHTML = `${valAmount}.${valDecimal}<small>°C</small>`; } }
-            else if (type === 'feed') el.innerHTML = `${valAmount}<small>g</small>`;
+            else if (type === 'feed') el.innerHTML = `${valAmount}<small>ml</small>`;
         };
 
         const typeLabel = { feed: '식사', diaper: '배변', sleep: '수면', bath: '목욕', health: '건강', photo: '일기' };
@@ -552,11 +570,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             switch (type) {
                 case 'feed':
-                    selTitle = rec ? rec.title : '식사';
+                    selTitle = rec ? rec.title : '분유';
+                    valAmount = rec ? parseInt(rec.description) : 120;
                     html = `${hdr}<div class="selection-grid">
+                        <div class="selection-item ${selTitle === '분유' ? 'active' : ''}" data-val="f3"><div class="circle"><i class="fas fa-baby-carriage"></i></div><label>분유</label></div>
                         <div class="selection-item ${selTitle === '식사' ? 'active' : ''}" data-val="f1"><div class="circle"><i class="fas fa-utensils"></i></div><label>식사</label></div>
                         <div class="selection-item ${selTitle === '간식' ? 'active' : ''}" data-val="f2"><div class="circle"><i class="fas fa-cookie"></i></div><label>간식</label></div>
-                    </div><div class="trigger-box" id="v-val-trigger"><span>기록된 섭취량</span><strong id="v-val-main">120<small>g</small></strong></div>
+                    </div><div class="trigger-box" id="v-val-trigger"><span>섭취량</span><strong id="v-val-main">${valAmount}<small>ml</small></strong></div>
                     <div class="note-container"><textarea id="v-nt" placeholder="메모를 입력하세요">${rec ? rec.notes || '' : ''}</textarea></div>`; break;
                 case 'diaper':
                     selTitle = rec ? rec.title : '소변';
@@ -597,7 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type === 'feed' || type === 'health') updateValDisp();
 
         document.getElementById('modal-dt-disp').onclick = () => openUniversalPicker({ wheels: [{ min: 0, max: 23, init: curDt.getHours() }, { min: 0, max: 59, init: curDt.getMinutes() }], separator: ':' }, res => { curDt.setHours(res[0], res[1]); refreshDtLabel(); });
-        if (type === 'feed') document.getElementById('v-val-trigger').onclick = () => openUniversalPicker({ wheels: [{ min: 0, max: 500, step: 5, init: valAmount, format: v => `${v} g` }] }, res => { valAmount = res; updateValDisp(); });
+        if (type === 'feed') document.getElementById('v-val-trigger').onclick = () => openUniversalPicker({ wheels: [{ min: 0, max: 500, step: 5, init: valAmount, format: v => `${v} ml` }] }, res => { valAmount = res; updateValDisp(); });
         if (type === 'health') document.getElementById('v-val-trigger').onclick = () => {
             if (selTitle === '투약') openUniversalPicker({ wheels: [{ min: 1, max: 50, init: valAmount, format: v => `${v} ml` }] }, res => { valAmount = res; updateValDisp(); });
             else openUniversalPicker({ wheels: [{ min: 34, max: 42, init: valAmount }, { min: 0, max: 9, init: valDecimal, format: v => `.${v}` }], separator: '' }, res => { valAmount = res[0]; valDecimal = res[1]; updateValDisp(); });
@@ -624,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('save-final'); btn.disabled = true; btn.innerText = '저장 중...';
             try {
                 const res = { type, title: selTitle, timestamp: curDt.getTime(), notes: document.getElementById('v-nt')?.value || '', imageData: selImg };
-                if (type === 'feed') res.description = `${valAmount}g`;
+                if (type === 'feed') res.description = `${valAmount}ml`;
                 else if (type === 'health') res.description = selTitle === '투약' ? `${valAmount}ml` : `${valAmount}.${valDecimal}°C`;
                 else if (type === 'sleep') {
                     let dm = sleepEnd - sleepStart; let ae = new Date(sleepEnd);

@@ -263,10 +263,11 @@ header {
 }
 
 .title-row h1 {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 950;
     letter-spacing: -0.8px;
     color: var(--text-main);
+    white-space: nowrap;
 }
 
 .d-day-badge {
@@ -1041,7 +1042,7 @@ header {
     background: var(--modal-bg);
     width: 100%;
     border-radius: 40px 40px 0 0;
-    padding: 30px 22px calc(20px + var(--safe-area-bottom));
+    padding: 24px 22px calc(15px + var(--safe-area-bottom));
     animation: modalSlideUp 0.4s cubic-bezier(0.19, 1, 0.22, 1);
     box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.1);
     transition: background 0.3s;
@@ -1063,7 +1064,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
 }
 
 .modal-header-row h3 {
@@ -1212,7 +1213,7 @@ header {
 }
 
 .trigger-box strong {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     font-weight: 950;
     color: var(--text-main);
     letter-spacing: -1px;
@@ -1228,10 +1229,10 @@ header {
 .note-container {
     background: var(--input-bg);
     border-radius: 20px;
-    padding: 20px;
-    min-height: 130px;
+    padding: 15px 20px;
+    min-height: 100px;
     border: 1px solid var(--border);
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     transition: border-color 0.2s;
 }
 
