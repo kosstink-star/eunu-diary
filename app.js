@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         capsules = await dbOp('read', 'capsules', 'all') || [];
         updateHeader(); render();
     };
-    loadAll();
+    // loadAll() was here - moved to end
 
     const selectors = {
         modalOverlay: document.getElementById('modal-overlay'), modalBody: document.getElementById('modal-body'),
@@ -814,8 +814,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event bindings (stat cards, add btn)
     ['feed', 'diaper', 'sleep', 'bath', 'health', 'photo'].forEach(t => { const b = document.getElementById(`btn-${t}`); if (b) b.onclick = () => window.openModal(t); });
     document.getElementById('global-add-btn').onclick = () => window.openModal('quick');
-    const bc = document.getElementById('btn-capsule-link');
-    if (bc) bc.onclick = () => window.renderCapsules();
+    bc.onclick = () => switchView('capsules');
 
-    switchView('home');
+    // Final Initialization
+    (async () => {
+        try {
+            await loadAll();
+            switchView('home');
+            console.log('초기 데이터 로드 및 홈 화면 렌더링 완료');
+        } catch (e) {
+            console.error('초기 로드 중 치명적 오류:', e);
+            showToast('앱 초기화 중 문제가 발생했습니다.', 'error');
+        }
+    })();
 });
