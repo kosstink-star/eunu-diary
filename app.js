@@ -2,8 +2,29 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('우리은우 성장일기 v2.0 로드 완료');
 
     // --- Firebase ---
-    firebase.initializeApp({ databaseURL: "https://eunu-diary-default-rtdb.firebaseio.com" });
+    firebase.initializeApp({
+        apiKey: "AIzaSyC_zGQcRDX5DwKUm2qQhJMbeSmR0P7dgnc",
+        authDomain: "eunu-diary-default-rtdb.firebaseapp.com",
+        databaseURL: "https://eunu-diary-default-rtdb.firebaseio.com",
+        projectId: "eunu-diary",
+        appId: "1:141481587568:web:4d0142176607d0c15b55b5"
+    });
     const db = firebase.database();
+    const auth = firebase.auth();
+
+    // 익명 인증 수행 (보안 규칙 준수를 위해 필요)
+    const authenticate = () => {
+        return new Promise((resolve, reject) => {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    console.log('Firebase 인증 완료 (익명 ID):', user.uid);
+                    resolve(user);
+                } else {
+                    auth.signInAnonymously().catch(reject);
+                }
+            });
+        });
+    };
 
     // --- IndexedDB ---
     const DB_NAME = 'EunuDiaryDB', DB_VERSION = 2;
@@ -888,12 +909,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Final Initialization
     (async () => {
         try {
-            await loadAll();
+            await authenticate(); // 1. 먼저 Firebase 인증을 완료함
+            await loadAll();      // 2. 인증 완료 후 데이터 로드
             switchView('home');
-            console.log('초기 데이터 로드 및 홈 화면 렌더링 완료');
+            console.log('보안 인증 및 초기 데이터 로드 완료');
         } catch (e) {
-            console.error('초기 로드 중 치명적 오류:', e);
-            showToast('앱 초기화 중 문제가 발생했습니다.', 'error');
+            console.error('초기화 중 오류 발생:', e);
+            showToast('앱 초기화 및 보안 인증 중 문제가 발생했습니다.', 'error');
         }
     })();
 });
