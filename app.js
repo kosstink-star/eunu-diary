@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.database();
 
     // --- IndexedDB ---
-    const DB_NAME = 'EunuDiaryDB', DB_VERSION = 1;
-    const STORES = ['records', 'growthData', 'profile', 'sync'];
+    const DB_NAME = 'EunuDiaryDB', DB_VERSION = 2;
+    const STORES = ['records', 'growthData', 'profile', 'sync', 'capsules'];
     const dbPromise = new Promise((resolve, reject) => {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
         req.onupgradeneeded = e => { const d = e.target.result; STORES.forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s); }); };
@@ -153,13 +153,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const saveAll = async (syncToCloud = true) => {
-        try {
-            await dbOp('write', 'records', 'all', records);
-            await dbOp('write', 'growthData', 'all', growthData);
-            await dbOp('write', 'profile', 'data', profile);
-            await dbOp('write', 'capsules', 'all', capsules);
-            await dbOp('write', 'sync', 'familyId', familyId || '');
-        } catch (e) { console.error('로컬 저장 실패:', e); }
+        const ops = [
+            dbOp('write', 'records', 'all', records),
+            dbOp('write', 'growthData', 'all', growthData),
+            dbOp('write', 'profile', 'data', profile),
+            dbOp('write', 'capsules', 'all', capsules),
+            dbOp('write', 'sync', 'familyId', familyId || '')
+        ];
+        const results = await Promise.allSettled(ops);
+        results.forEach((r, i) => { if (r.status === 'rejected') console.error(`로컬 저장 실패 [${i}]:`, r.reason); });
 
         if (syncEnabled && familyId && syncToCloud) {
             const status = document.getElementById('sync-status');
@@ -182,19 +184,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (status) status.innerText = `가족 ID: ${fid} (연결 중...)`;
 
         // 연결 상태 감시 (Firebase 전용 레퍼런스)
+        let initialConnected = false;
         db.ref('.info/connected').on('value', snap => {
-            if (snap.val() === false && status) {
-                // 실제로 연결이 끊겼을 때만 표시
-                status.innerText = `가족 ID: ${fid} (오프라인/연결 끊김)`;
-                status.style.color = '#f44336';
-            } else if (snap.val() === true && status) {
-                // 다시 연결되었을 때 (초기 연결 포함)
-                if (status.innerText.includes('오프라인')) {
+            if (snap.val() === true) {
+                // 연결됨 (초기 연결 포함)
+                if (!initialConnected) {
+                    initialConnected = true;
+                } else if (status) {
+                    // 재연결 시에만 복구 메시지 표시
                     status.innerText = `가족 ID: ${fid} (연결 복구됨)`;
                     status.style.color = '#43a047';
-                    // 잠시 후 '동기화 완료'로 변경
                     setTimeout(() => { if (status) status.innerText = `가족 ID: ${fid} (동기화 완료)`; }, 2000);
                 }
+            } else if (snap.val() === false && status && initialConnected) {
+                // 초기 연결 이후에 끊겼을 때만 오프라인 표시
+                status.innerText = `가족 ID: ${fid} (오프라인/연결 끊김)`;
+                status.style.color = '#f44336';
             }
         });
 
@@ -259,10 +264,14 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(timeout);
             console.error('동기화 오류:', err);
             if (status) {
-                status.innerText = `가족 ID: ${fid} (연결 실패: ${err.code || '오류'})`;
+                if (err.code === 'PERMISSION_DENIED') {
+                    status.innerText = `가족 ID: ${fid} (접근 권한 없음 - Firebase 보안규칙 확인 필요)`;
+                } else {
+                    status.innerText = `가족 ID: ${fid} (연결 실패: ${err.code || '오류'})`;
+                }
                 status.style.color = '#f44336';
             }
-            window.showToast('데이터 동기화에 실패했습니다.', 'error');
+            window.showToast('데이터 동기화에 실패했습니다. Firebase 보안규칙을 확인하세요.', 'error');
         });
     };
 
@@ -282,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         familyId = await dbOp('read', 'sync', 'familyId') || null;
         syncEnabled = !!familyId;
         if (syncEnabled) setupSync(familyId);
-        capsules = await dbOp('read', 'capsules', 'all') || [];
+        try { capsules = await dbOp('read', 'capsules', 'all') || []; } catch (e) { capsules = []; console.warn('capsules 스토어 읽기 실패, 빈 배열로 초기화:', e); }
         updateHeader(); render();
     };
     // loadAll() was here - moved to end
@@ -294,7 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
         graph: document.getElementById('view-graph'), calendar: document.getElementById('view-calendar'),
         settings: document.getElementById('view-settings'), gallery: document.getElementById('view-gallery'),
         capsules: document.getElementById('view-capsules'),
-        dDayText: document.getElementById('d-day-text'), backBtn: document.getElementById('header-back-btn')
+        dDayText: document.getElementById('d-day-text'), backBtn: document.getElementById('header-back-btn'),
+        btnCapsule: document.getElementById('btn-capsule-link')
     };
 
     const getTimeStr = ts => new Date(ts).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -873,7 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event bindings (stat cards, add btn)
     ['feed', 'diaper', 'sleep', 'bath', 'health', 'photo'].forEach(t => { const b = document.getElementById(`btn-${t}`); if (b) b.onclick = () => window.openModal(t); });
     document.getElementById('global-add-btn').onclick = () => window.openModal('quick');
-    bc.onclick = () => switchView('capsules');
+    if (selectors.btnCapsule) selectors.btnCapsule.onclick = () => switchView('capsules');
 
     // Final Initialization
     (async () => {
